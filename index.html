@@ -57,8 +57,10 @@
   .btn-submit { padding: 11px 28px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; }
   .btn-submit:hover { background: #3a6152; }
   .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: #7AADA0; cursor: not-allowed; }
   .toast { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--success-bg); border: 1px solid #B8D5C8; border-radius: var(--radius-sm); color: var(--success-text); font-size: 13px; margin-bottom: 1rem; font-weight: 500; }
   .toast.show { display: flex; }
+  .toast.error { background: var(--danger-light); border-color: #D4856F; color: var(--danger); }
   .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
   .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .record-count { font-size: 13px; color: var(--text-muted); background: var(--tag-bg); padding: 5px 12px; border-radius: 20px; }
@@ -76,7 +78,6 @@
   td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: #FAFAF8; }
-  tbody tr.new-row td { background: #F2F7F4; }
   .cat-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--accent-light); color: var(--accent); }
   .tag-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--tag-bg); color: var(--text-muted); margin: 2px 2px 0 0; }
   .empty-state { padding: 3rem; text-align: center; color: var(--text-hint); font-size: 14px; }
@@ -88,6 +89,10 @@
   .metric-val { font-size: 26px; font-weight: 700; color: var(--accent); }
   .metric-val-sm { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
   .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .sync-status { font-size: 12px; color: var(--text-hint); display: flex; align-items: center; gap: 5px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #7AADA0; }
+  .sync-dot.ok { background: #4A7A68; }
+  .sync-dot.err { background: var(--danger); }
   @media (max-width: 640px) { .sidebar { display: none; } .main { padding: 1.25rem; } }
 </style>
 </head>
@@ -117,11 +122,11 @@
     <div id="page-form" class="page active">
       <div class="page-header">
         <div class="page-title">新增客訴紀錄</div>
-        <div class="page-subtitle">填寫後點擊「送出紀錄」，資料將自動彙整至資料分頁</div>
+        <div class="page-subtitle">填寫後點擊「送出紀錄」，資料將自動存入 Google Sheets</div>
       </div>
       <div id="toast" class="toast">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-        已成功送出！
+        <span id="toast-msg">已成功送出！</span>
       </div>
       <div class="form-card">
         <div class="field-label"><span class="req">*</span> 問題類別</div>
@@ -144,7 +149,7 @@
       </div>
       <div class="form-actions">
         <button class="btn-reset" onclick="resetForm()">↺ 清除重填</button>
-        <button class="btn-submit" onclick="submitForm()">送出紀錄</button>
+        <button class="btn-submit" id="submit-btn" onclick="submitForm()">送出紀錄</button>
       </div>
     </div>
 
@@ -152,7 +157,7 @@
     <div id="page-sheet" class="page">
       <div class="page-header">
         <div class="page-title">資料彙整</div>
-        <div class="page-subtitle">所有送出的客訴紀錄，可依月份篩選</div>
+        <div class="page-subtitle">資料來自 Google Sheets，即時同步</div>
       </div>
       <div class="toolbar">
         <div class="toolbar-left">
@@ -160,17 +165,24 @@
             <option value="all">全部月份</option>
           </select>
           <span class="record-count" id="record-count">0 筆紀錄</span>
+          <span class="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">尚未載入</span></span>
         </div>
-        <button class="btn-action" onclick="exportSheetXLSX()">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          匯出 Excel（.xlsx）
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-action" onclick="loadFromSheets()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            重新載入
+          </button>
+          <button class="btn-action" onclick="exportSheetXLSX()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            匯出 Excel（.xlsx）
+          </button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
+          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th></tr></thead>
           <tbody id="sheet-body">
-            <tr><td colspan="5" class="empty-state">尚無資料，請至「填寫表單」新增紀錄</td></tr>
+            <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
           </tbody>
         </table>
       </div>
@@ -180,10 +192,10 @@
     <div id="page-stats" class="page">
       <div class="page-header">
         <div class="page-title">統計圖表</div>
-        <div class="page-subtitle">根據已填寫的紀錄自動計算</div>
+        <div class="page-subtitle">根據 Google Sheets 資料自動計算</div>
       </div>
       <div id="no-data-msg" style="text-align:center;color:var(--text-hint);font-size:14px;padding:3rem 0;">
-        尚無資料，請先至「填寫表單」送出紀錄
+        尚無資料，請先至「資料彙整」點擊重新載入
       </div>
       <div id="stats-content" style="display:none;">
         <div class="toolbar">
@@ -229,6 +241,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+const API_URL = 'https://script.google.com/macros/s/AKfycby3oz5IoKVdguE79vL8lBeP0nj8-YBxu0BYQDqiFaJbcdVYkUT72lNjUbKedueXwySs/exec';
+
 const TAGS = {
   product:  ['商品瑕疵','過敏','安全疑慮'],
   usage:    ['光彩','海藻','淨化液','塗抹方式','用量','衣物變色'],
@@ -274,7 +288,8 @@ function switchPage(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
-  if (id === 'stats') renderStats();
+  if (id === 'sheet') loadFromSheets();
+  if (id === 'stats') { loadFromSheets(); }
 }
 
 function selectCat(cat, btn) {
@@ -305,23 +320,62 @@ function updateChar() {
   el.className = 'char-count' + (n > 130 ? ' warn' : '');
 }
 
-function submitForm() {
+async function submitForm() {
   if (!currentCat) { alert('請先選擇問題類別'); return; }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '送出中…';
   const now = new Date();
   const ts = now.toLocaleDateString('zh-TW') + ' ' + now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
-  records.push({ id: Date.now(), ts, cat: CAT_LABELS[currentCat], tags: [...selectedTags], note: document.getElementById('note').value.trim() });
-  updateMonthSelects();
-  renderSheet();
-  showToast();
-  resetForm();
+  const payload = {
+    ts, cat: CAT_LABELS[currentCat],
+    tags: [...selectedTags].join('／') || '—',
+    note: document.getElementById('note').value.trim() || '—'
+  };
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    showToast('已成功送出！資料已存入 Google Sheets', false);
+    resetForm();
+  } catch(err) {
+    showToast('送出失敗，請確認網路連線', true);
+  }
+  btn.disabled = false; btn.textContent = '送出紀錄';
 }
 
-function deleteRecord(id) {
-  if (!confirm('確定要刪除這筆紀錄？')) return;
-  records = records.filter(r => r.id !== id);
-  updateMonthSelects();
-  renderSheet();
-  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+async function loadFromSheets() {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  text.textContent = '載入中…'; dot.className = 'sync-dot';
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now());
+    const json = await res.json();
+    const rows = json.data || [];
+    const header = rows[0] || [];
+    const tsIdx = header.indexOf('時間');
+    const catIdx = header.indexOf('類別');
+    const tagsIdx = header.indexOf('標籤');
+    const noteIdx = header.indexOf('補充說明');
+    records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
+      id: i,
+      ts: r[tsIdx] || '',
+      cat: r[catIdx] || '',
+      tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
+      note: r[noteIdx] || ''
+    }));
+    updateMonthSelects();
+    renderSheet();
+    renderStats();
+    dot.className = 'sync-dot ok';
+    text.textContent = '已同步 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+  } catch(err) {
+    dot.className = 'sync-dot err';
+    text.textContent = '載入失敗';
+    document.getElementById('sheet-body').innerHTML = '<tr><td colspan="4" class="empty-state">載入失敗，請點「重新載入」再試</td></tr>';
+  }
 }
 
 function renderSheet() {
@@ -329,23 +383,23 @@ function renderSheet() {
   const tbody = document.getElementById('sheet-body');
   document.getElementById('record-count').textContent = filtered.length + ' 筆紀錄';
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">此月份尚無資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">此月份尚無資料</td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.map((r, i) => `
-    <tr class="${i === filtered.length-1 ? 'new-row' : ''}">
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
       <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
       <td><span class="cat-badge">${r.cat}</span></td>
       <td>${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
-      <td style="color:${r.note?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
-      <td><button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button></td>
+      <td style="color:${r.note && r.note!=='—'?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
     </tr>`).join('');
 }
 
-function showToast() {
+function showToast(msg, isError) {
   const t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
 
 function resetForm() {
@@ -381,10 +435,8 @@ function renderStats() {
   const noData = document.getElementById('no-data-msg');
   const content = document.getElementById('stats-content');
   const filtered = filteredRecords('stats-month-select');
-
   if (!records.length) { noData.style.display='block'; content.style.display='none'; return; }
   noData.style.display='none'; content.style.display='block';
-
   if (!filtered.length) {
     document.getElementById('stat-total').textContent = '0';
     document.getElementById('stat-top-cat').textContent = '—';
@@ -395,13 +447,11 @@ function renderStats() {
     if (tagChartInst) { tagChartInst.destroy(); tagChartInst = null; }
     return;
   }
-
   const catCount = {}, tagCount = {};
   filtered.forEach(r => {
     catCount[r.cat] = (catCount[r.cat]||0) + 1;
-    r.tags.forEach(t => { tagCount[t] = (tagCount[t]||0) + 1; });
+    r.tags.forEach(t => { if(t && t!=='—') tagCount[t] = (tagCount[t]||0) + 1; });
   });
-
   document.getElementById('stat-total').textContent = filtered.length;
   const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
   const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0];
@@ -409,34 +459,24 @@ function renderStats() {
   document.getElementById('stat-top-tag').textContent = topTag ? `${topTag[0]}（${topTag[1]}件）` : '—';
   document.getElementById('stat-cat-count').textContent = Object.keys(catCount).length;
   document.getElementById('stats-period').textContent = `共 ${filtered.length} 筆`;
-
   const catLabels = Object.keys(catCount);
   if (catChartInst) catChartInst.destroy();
   catChartInst = new Chart(document.getElementById('catChart'), {
     type: 'doughnut',
     data: { labels: catLabels, datasets: [{ data: catLabels.map(l=>catCount[l]), backgroundColor: PALETTE.slice(0,catLabels.length), borderWidth: 2, borderColor: '#fff' }] },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '55%',
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { family:'Noto Sans TC', size:11 }, padding: 10, boxWidth: 10 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}：${ctx.parsed} 件` } }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%',
+      plugins: { legend: { position:'bottom', labels:{ font:{family:'Noto Sans TC',size:11}, padding:10, boxWidth:10 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}：${ctx.parsed} 件` } } } }
   });
-
   const tagEntries = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if (tagChartInst) tagChartInst.destroy();
   tagChartInst = new Chart(document.getElementById('tagChart'), {
     type: 'bar',
     data: { labels: tagEntries.map(e=>e[0]), datasets: [{ data: tagEntries.map(e=>e[1]), backgroundColor: '#2D4A3E', borderRadius: 4, borderSkipped: false }] },
-    options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { font:{family:'Noto Sans TC',size:11}, color:'#7A7570', stepSize:1 }, grid:{color:'rgba(0,0,0,0.05)'}, beginAtZero: true },
-        y: { ticks: { font:{family:'Noto Sans TC',size:11}, color:'#7A7570' }, grid:{display:false} }
-      }
-    }
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ticks:{font:{family:'Noto Sans TC',size:11},color:'#7A7570',stepSize:1},grid:{color:'rgba(0,0,0,0.05)'},beginAtZero:true},
+               y:{ticks:{font:{family:'Noto Sans TC',size:11},color:'#7A7570'},grid:{display:false}} } }
   });
 }
 
@@ -465,7 +505,7 @@ function exportStatsXLSX() {
   const catCount = {}, tagCount = {};
   filtered.forEach(r => {
     catCount[r.cat] = (catCount[r.cat]||0) + 1;
-    r.tags.forEach(t => { tagCount[t] = (tagCount[t]||0) + 1; });
+    r.tags.forEach(t => { if(t && t!=='—') tagCount[t] = (tagCount[t]||0) + 1; });
   });
   const catData = Object.entries(catCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '類別':k, '件數':v, '佔比': Math.round(v/filtered.length*100)+'%' }));
   const tagData = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '標籤':k, '件數':v }));
