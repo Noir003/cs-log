@@ -129,6 +129,14 @@
         <span id="toast-msg">已成功送出！</span>
       </div>
       <div class="form-card">
+        <div class="field-label"><span class="req">*</span> 來源</div>
+        <div class="cat-grid">
+          <button class="cat-btn" onclick="selectSource('FB/LINE',this)">FB／LINE</button>
+          <button class="cat-btn" onclick="selectSource('電話',this)">電話</button>
+          <button class="cat-btn" onclick="selectSource('網路平台',this)">網路平台（官網／蝦皮）</button>
+        </div>
+      </div>
+      <div class="form-card">
         <div class="field-label"><span class="req">*</span> 問題類別</div>
         <div class="cat-grid">
           <button class="cat-btn" onclick="selectCat('product',this)">商品問題</button>
@@ -193,7 +201,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
+          <thead><tr><th>時間</th><th>來源</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
           <tbody id="sheet-body">
             <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
           </tbody>
@@ -276,7 +284,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycby3oz5IoKVdguE79vL8lBeP
 
 const TAGS = {
   product:  ['商品瑕疵','過敏','安全疑慮'],
-  usage:    ['光彩','海藻','淨化液','塗抹方式','用量','衣物變色'],
+  usage:    ['光彩','海藻','淨化液','塗抹方式','用量','衣物變色','手變色'],
   emptybox: ['問地址','問收寄進度'],
   order:    ['修改','取消','內容錯誤','問進度'],
   other:    []
@@ -353,6 +361,7 @@ function updateChar() {
 
 async function submitForm() {
   if (!currentCat) { alert('請先選擇問題類別'); return; }
+  if (!currentSource) { alert('請先選擇來源'); return; }
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '送出中…';
   const now = new Date();
@@ -369,7 +378,8 @@ async function submitForm() {
     tags: [...selectedTags].join('／') || '—',
     note: document.getElementById('note').value.trim() || '—',
     name: document.getElementById('member-name').value.trim() || '—',
-    phone: document.getElementById('member-phone').value.trim() || '—'
+    phone: document.getElementById('member-phone').value.trim() || '—',
+    source: currentSource
   };
   try {
     await fetch(API_URL, {
@@ -400,6 +410,7 @@ async function loadFromSheets() {
     const noteIdx = header.indexOf('補充說明');
     const nameIdx = header.indexOf('姓名');
     const phoneIdx = header.indexOf('手機');
+    const sourceIdx = header.indexOf('來源');
     records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
       id: i,
       rowIndex: i + 2,
@@ -408,7 +419,8 @@ async function loadFromSheets() {
       tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
       note: r[noteIdx] || '',
       name: r[nameIdx] || '—',
-      phone: r[phoneIdx] || '—'
+      phone: r[phoneIdx] || '—',
+      source: r[sourceIdx] || '—'
     }));
     updateMonthSelects();
     renderSheet();
@@ -433,12 +445,16 @@ function renderSheet() {
   tbody.innerHTML = filtered.map(r => `
     <tr>
       <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
+      <td style="color:${r.source!=='—'?'var(--text)':'var(--text-hint)'};">${r.source}</td>
       <td style="color:${r.name!=='—'?'var(--text)':'var(--text-hint)'};">${r.name}</td>
       <td style="color:${r.phone!=='—'?'var(--text)':'var(--text-hint)'};">${r.phone}</td>
       <td><span class="cat-badge">${r.cat}</span></td>
       <td>${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="color:${r.note && r.note!=='—'?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
-      <td><button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button></td>
+      <td style="white-space:nowrap;">
+        <button class="btn-delete" style="margin-bottom:4px;" onclick="openEditModal(${r.id})">編輯</button>
+        <button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -469,7 +485,7 @@ function showToast(msg, isError) {
 }
 
 function resetForm() {
-  currentCat = ''; selectedTags.clear();
+  currentCat = ''; currentSource = ''; selectedTags.clear();
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tags-section').classList.remove('visible');
   document.getElementById('tags-wrap').innerHTML = '';
@@ -490,7 +506,7 @@ function autoColWidth(ws, data) {
 function exportSheetXLSX() {
   const filtered = filteredRecords('sheet-month-select');
   if (!filtered.length) { alert('此月份尚無資料可匯出'); return; }
-  const data = filtered.map(r => ({ '時間': r.ts, '姓名': r.name, '手機': r.phone, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
+  const data = filtered.map(r => ({ '時間': r.ts, '來源': r.source, '姓名': r.name, '手機': r.phone, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
   const ws = XLSX.utils.json_to_sheet(data);
   autoColWidth(ws, data);
   const wb = XLSX.utils.book_new();
@@ -596,6 +612,173 @@ function exportStatsXLSX() {
   autoColWidth(wsTag, tagData);
   XLSX.utils.book_append_sheet(wb, wsTag, '標籤統計');
   XLSX.writeFile(wb, `客服統計_${monthVal==='all'?'全部':monthVal.replace('/','')}_${dateStr()}.xlsx`);
+}
+</script>
+
+<!-- 編輯 Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:var(--radius);padding:1.5rem;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="font-size:16px;font-weight:700;margin-bottom:1.25rem;">編輯紀錄</div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">來源</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="edit-source-wrap">
+        <button class="cat-btn" onclick="editSelectSource('FB/LINE',this)">FB／LINE</button>
+        <button class="cat-btn" onclick="editSelectSource('電話',this)">電話</button>
+        <button class="cat-btn" onclick="editSelectSource('網路平台',this)">網路平台（官網／蝦皮）</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">問題類別</div>
+      <div class="cat-grid">
+        <button class="cat-btn" onclick="editSelectCat('product',this)">商品問題</button>
+        <button class="cat-btn" onclick="editSelectCat('usage',this)">使用方式</button>
+        <button class="cat-btn" onclick="editSelectCat('emptybox',this)">空盒活動</button>
+        <button class="cat-btn" onclick="editSelectCat('order',this)">訂單問題</button>
+        <button class="cat-btn" onclick="editSelectCat('other',this)">其他</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">關鍵字標籤</div>
+      <div class="tags-wrap" id="edit-tags-wrap"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">姓名</div>
+        <input id="edit-name" type="text" maxlength="20" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;">
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">手機號碼</div>
+        <input id="edit-phone" type="tel" maxlength="10" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;">
+      </div>
+    </div>
+    <div style="margin-bottom:1.25rem;">
+      <div class="field-label">補充說明</div>
+      <textarea id="edit-note" maxlength="150" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;resize:vertical;min-height:80px;outline:none;"></textarea>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <button class="btn-reset" onclick="closeEditModal()">取消</button>
+      <button class="btn-submit" id="edit-save-btn" onclick="saveEdit()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSource = '';
+let editingId = null;
+let editCat = '';
+let editSelectedTags = new Set();
+
+function selectSource(src, btn) {
+  currentSource = src;
+  document.querySelectorAll('.form-card .cat-btn').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes('selectSource')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+}
+
+function editSelectSource(src, btn) {
+  currentSource = src;
+  document.querySelectorAll('#edit-source-wrap .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function editSelectCat(cat, btn) {
+  editCat = cat; editSelectedTags.clear();
+  document.querySelectorAll('#edit-modal .cat-grid .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('edit-tags-wrap');
+  const tags = TAGS[cat] || [];
+  wrap.innerHTML = '';
+  tags.forEach(t => {
+    const el = document.createElement('button');
+    el.className = 'tag'; el.textContent = t;
+    el.onclick = () => {
+      if (editSelectedTags.has(t)) { editSelectedTags.delete(t); el.classList.remove('active'); }
+      else { editSelectedTags.add(t); el.classList.add('active'); }
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function openEditModal(id) {
+  const r = records.find(r => r.id === id);
+  if (!r) return;
+  editingId = id;
+  editCat = Object.keys(CAT_LABELS).find(k => CAT_LABELS[k] === r.cat) || '';
+  editSelectedTags = new Set(r.tags);
+  currentSource = r.source || '';
+
+  // 設定來源
+  document.querySelectorAll('#edit-source-wrap .cat-btn').forEach(b => {
+    const src = b.textContent.replace('／','/').trim();
+    b.classList.toggle('active', src === currentSource || b.textContent.includes(currentSource));
+  });
+
+  // 設定類別
+  const catBtns = document.querySelectorAll('#edit-modal .cat-grid .cat-btn');
+  catBtns.forEach(b => b.classList.remove('active'));
+  editSelectCat(editCat, [...catBtns].find(b => {
+    const map = {'商品問題':'product','使用方式':'usage','空盒活動':'emptybox','訂單問題':'order','其他':'other'};
+    return map[b.textContent] === editCat;
+  }) || catBtns[0]);
+
+  // 恢復已選標籤
+  setTimeout(() => {
+    document.querySelectorAll('#edit-tags-wrap .tag').forEach(el => {
+      if (editSelectedTags.has(el.textContent)) el.classList.add('active');
+    });
+  }, 50);
+
+  document.getElementById('edit-name').value = r.name === '—' ? '' : r.name;
+  document.getElementById('edit-phone').value = r.phone === '—' ? '' : r.phone;
+  document.getElementById('edit-note').value = r.note === '—' ? '' : r.note;
+
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEdit() {
+  if (!editCat) { alert('請選擇問題類別'); return; }
+  const r = records.find(r => r.id === editingId);
+  if (!r) return;
+  const btn = document.getElementById('edit-save-btn');
+  btn.disabled = true; btn.textContent = '儲存中…';
+
+  const updated = {
+    ...r,
+    source: currentSource,
+    cat: CAT_LABELS[editCat],
+    tags: [...editSelectedTags],
+    name: document.getElementById('edit-name').value.trim() || '—',
+    phone: document.getElementById('edit-phone').value.trim() || '—',
+    note: document.getElementById('edit-note').value.trim() || '—'
+  };
+
+  records = records.map(rec => rec.id === editingId ? updated : rec);
+  renderSheet();
+  closeEditModal();
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update', row: r.rowIndex,
+        ts: r.ts, cat: updated.cat,
+        tags: updated.tags.join('／') || '—',
+        note: updated.note,
+        name: updated.name,
+        phone: updated.phone
+      })
+    });
+  } catch(err) { console.error('更新失敗', err); }
+
+  btn.disabled = false; btn.textContent = '儲存變更';
 }
 </script>
 </body>
