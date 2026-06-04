@@ -402,6 +402,7 @@ async function loadFromSheets() {
     const phoneIdx = header.indexOf('手機');
     records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
       id: i,
+      rowIndex: i + 2,
       ts: formatTs(r[tsIdx] || ''),
       cat: r[catIdx] || '',
       tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
@@ -445,13 +446,16 @@ async function deleteRecord(id) {
   if (!confirm('確定要刪除這筆紀錄？\n（同時從 Google Sheets 移除）')) return;
   const r = records.find(r => r.id === id);
   if (!r) return;
-  records = records.filter(r => r.id !== id);
+  // 刪除後後面的行號都往前移，先更新其他紀錄的 rowIndex
+  records = records.filter(rec => rec.id !== id).map(rec => ({
+    ...rec,
+    rowIndex: rec.rowIndex > r.rowIndex ? rec.rowIndex - 1 : rec.rowIndex
+  }));
   updateMonthSelects();
   renderSheet();
   if (document.getElementById('page-stats').classList.contains('active')) renderStats();
   try {
-    const params = new URLSearchParams({ action: 'delete', ts: r.ts });
-    await fetch(API_URL + '?' + params.toString(), { mode: 'no-cors' });
+    await fetch(API_URL + '?action=delete&row=' + r.rowIndex, { mode: 'no-cors' });
   } catch(err) {
     console.error('刪除同步失敗', err);
   }
