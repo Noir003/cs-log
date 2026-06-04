@@ -256,11 +256,17 @@
 <script>
 function formatTs(raw) {
   if (!raw) return '';
-  // Handle ISO format: 2026-06-04T03:48:00.000Z
   if (raw.includes('T')) {
     const d = new Date(raw);
     if (!isNaN(d)) {
-      return d.toLocaleDateString('zh-TW') + ' ' + d.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+      const y = d.getFullYear();
+      const mo = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const h = d.getHours();
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      const ampm = h < 12 ? '上午' : '下午';
+      const h12 = String(h < 12 ? h : h - 12).padStart(2,'0');
+      return `${y}/${mo}/${day} ${ampm} ${h12}:${mi}`;
     }
   }
   return raw;
@@ -350,7 +356,14 @@ async function submitForm() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '送出中…';
   const now = new Date();
-  const ts = now.toLocaleDateString('zh-TW') + ' ' + now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+  const y = now.getFullYear();
+  const mo = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const h = now.getHours();
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const ampm = h < 12 ? '上午' : '下午';
+  const h12 = String(h < 12 ? h : h - 12).padStart(2,'0');
+  const ts = `${y}/${mo}/${d} ${ampm} ${h12}:${mi}`;
   const payload = {
     ts, cat: CAT_LABELS[currentCat],
     tags: [...selectedTags].join('／') || '—',
