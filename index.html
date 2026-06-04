@@ -763,18 +763,21 @@ async function saveEdit() {
   renderSheet();
   closeEditModal();
 
+  const payload = {
+    action: 'update', row: r.rowIndex,
+    ts: r.ts, cat: updated.cat,
+    tags: updated.tags.join('／') || '—',
+    note: updated.note,
+    name: updated.name,
+    phone: updated.phone,
+    source: updated.source
+  };
+  console.log('送出編輯:', JSON.stringify(payload));
   try {
     await fetch(API_URL, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'update', row: r.rowIndex,
-        ts: r.ts, cat: updated.cat,
-        tags: updated.tags.join('／') || '—',
-        note: updated.note,
-        name: updated.name,
-        phone: updated.phone
-      })
+      body: JSON.stringify(payload)
     });
   } catch(err) { console.error('更新失敗', err); }
 
