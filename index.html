@@ -143,6 +143,19 @@
         <div class="tags-wrap" id="tags-wrap"></div>
       </div>
       <div class="form-card">
+        <div class="field-label">會員資料 <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-hint);">選填</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">姓名</div>
+            <input id="member-name" type="text" placeholder="會員姓名" maxlength="20" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">手機號碼</div>
+            <input id="member-phone" type="tel" placeholder="09xxxxxxxx" maxlength="10" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+      </div>
+      <div class="form-card">
         <div class="field-label">補充說明</div>
         <textarea id="note" maxlength="150" placeholder="請輸入補充內容（選填，最多 150 字）" oninput="updateChar()"></textarea>
         <div class="char-row"><span class="char-count" id="char-count">0 / 150</span></div>
@@ -180,7 +193,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
+          <thead><tr><th>時間</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
           <tbody id="sheet-body">
             <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
           </tbody>
@@ -341,12 +354,13 @@ async function submitForm() {
   const payload = {
     ts, cat: CAT_LABELS[currentCat],
     tags: [...selectedTags].join('／') || '—',
-    note: document.getElementById('note').value.trim() || '—'
+    note: document.getElementById('note').value.trim() || '—',
+    name: document.getElementById('member-name').value.trim() || '—',
+    phone: document.getElementById('member-phone').value.trim() || '—'
   };
   try {
     await fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -371,12 +385,16 @@ async function loadFromSheets() {
     const catIdx = header.indexOf('類別');
     const tagsIdx = header.indexOf('標籤');
     const noteIdx = header.indexOf('補充說明');
+    const nameIdx = header.indexOf('姓名');
+    const phoneIdx = header.indexOf('手機');
     records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
       id: i,
       ts: formatTs(r[tsIdx] || ''),
       cat: r[catIdx] || '',
       tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
-      note: r[noteIdx] || ''
+      note: r[noteIdx] || '',
+      name: r[nameIdx] || '—',
+      phone: r[phoneIdx] || '—'
     }));
     updateMonthSelects();
     renderSheet();
@@ -401,6 +419,8 @@ function renderSheet() {
   tbody.innerHTML = filtered.map(r => `
     <tr>
       <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
+      <td style="color:${r.name!=='—'?'var(--text)':'var(--text-hint)'};">${r.name}</td>
+      <td style="color:${r.phone!=='—'?'var(--text)':'var(--text-hint)'};">${r.phone}</td>
       <td><span class="cat-badge">${r.cat}</span></td>
       <td>${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="color:${r.note && r.note!=='—'?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
@@ -408,12 +428,23 @@ function renderSheet() {
     </tr>`).join('');
 }
 
-function deleteRecord(id) {
-  if (!confirm('確定要刪除這筆紀錄？\n（只從網頁移除，Google Sheets 不受影響）')) return;
+async function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆紀錄？\n（同時從 Google Sheets 移除）')) return;
+  const r = records.find(r => r.id === id);
+  if (!r) return;
   records = records.filter(r => r.id !== id);
   updateMonthSelects();
   renderSheet();
   if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', ts: r.ts, cat: r.cat, note: r.note })
+    });
+  } catch(err) {
+    console.error('刪除同步失敗', err);
+  }
 }
 
 function showToast(msg, isError) {
@@ -429,6 +460,8 @@ function resetForm() {
   document.getElementById('tags-section').classList.remove('visible');
   document.getElementById('tags-wrap').innerHTML = '';
   document.getElementById('note').value = '';
+  document.getElementById('member-name').value = '';
+  document.getElementById('member-phone').value = '';
   updateChar();
 }
 
@@ -443,7 +476,7 @@ function autoColWidth(ws, data) {
 function exportSheetXLSX() {
   const filtered = filteredRecords('sheet-month-select');
   if (!filtered.length) { alert('此月份尚無資料可匯出'); return; }
-  const data = filtered.map(r => ({ '時間': r.ts, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
+  const data = filtered.map(r => ({ '時間': r.ts, '姓名': r.name, '手機': r.phone, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
   const ws = XLSX.utils.json_to_sheet(data);
   autoColWidth(ws, data);
   const wb = XLSX.utils.book_new();
