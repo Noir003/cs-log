@@ -12,7 +12,8 @@
     --text: #1A1814; --text-muted: #7A7570; --text-hint: #B0AAA3;
     --accent: #2D4A3E; --accent-light: #E8F0ED; --accent-mid: #4A7A68;
     --tag-bg: #F0EDE8; --tag-active-bg: #2D4A3E; --tag-active-text: #FFFFFF;
-    --danger: #8B3A2A; --success-bg: #E8F0ED; --success-text: #2D4A3E;
+    --danger: #8B3A2A; --danger-light: #F9EDEA;
+    --success-bg: #E8F0ED; --success-text: #2D4A3E;
     --radius: 10px; --radius-sm: 6px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   }
@@ -20,7 +21,7 @@
   .layout { display: flex; min-height: 100vh; }
   .sidebar { width: 200px; flex-shrink: 0; background: var(--accent); padding: 2rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
   .sidebar-logo { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.05em; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.15); }
-  .sidebar-logo span { display: block; font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.5); margin-top: 3px; letter-spacing: 0.03em; }
+  .sidebar-logo span { display: block; font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.5); margin-top: 3px; }
   .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; transition: background 0.15s, color 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: 'Noto Sans TC', sans-serif; }
   .nav-item:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
   .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; }
@@ -29,7 +30,7 @@
   .page { display: none; }
   .page.active { display: block; }
   .page-header { margin-bottom: 1.75rem; }
-  .page-title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .page-title { font-size: 20px; font-weight: 700; }
   .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
   .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
   .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
@@ -59,7 +60,10 @@
   .toast { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--success-bg); border: 1px solid #B8D5C8; border-radius: var(--radius-sm); color: var(--success-text); font-size: 13px; margin-bottom: 1rem; font-weight: 500; }
   .toast.show { display: flex; }
   .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+  .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .record-count { font-size: 13px; color: var(--text-muted); background: var(--tag-bg); padding: 5px 12px; border-radius: 20px; }
+  .month-select { padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; outline: none; }
+  .month-select:focus { border-color: var(--accent-mid); }
   .btn-action { padding: 8px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
   .btn-action:hover { background: var(--tag-bg); }
   .btn-action.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -69,13 +73,15 @@
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead tr { background: var(--bg); }
   th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
-  td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: #FAFAF8; }
   tbody tr.new-row td { background: #F2F7F4; }
   .cat-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--accent-light); color: var(--accent); }
   .tag-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--tag-bg); color: var(--text-muted); margin: 2px 2px 0 0; }
   .empty-state { padding: 3rem; text-align: center; color: var(--text-hint); font-size: 14px; }
+  .btn-delete { padding: 4px 10px; background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hint); font-family: 'Noto Sans TC', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn-delete:hover { background: var(--danger-light); border-color: #D4856F; color: var(--danger); }
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
   .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
   .metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
@@ -115,7 +121,7 @@
       </div>
       <div id="toast" class="toast">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-        已成功送出！資料已記錄。
+        已成功送出！
       </div>
       <div class="form-card">
         <div class="field-label"><span class="req">*</span> 問題類別</div>
@@ -146,10 +152,15 @@
     <div id="page-sheet" class="page">
       <div class="page-header">
         <div class="page-title">資料彙整</div>
-        <div class="page-subtitle">所有送出的客訴紀錄</div>
+        <div class="page-subtitle">所有送出的客訴紀錄，可依月份篩選</div>
       </div>
       <div class="toolbar">
-        <span class="record-count" id="record-count">0 筆紀錄</span>
+        <div class="toolbar-left">
+          <select class="month-select" id="sheet-month-select" onchange="renderSheet()">
+            <option value="all">全部月份</option>
+          </select>
+          <span class="record-count" id="record-count">0 筆紀錄</span>
+        </div>
         <button class="btn-action" onclick="exportSheetXLSX()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
           匯出 Excel（.xlsx）
@@ -157,9 +168,9 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th></tr></thead>
+          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
           <tbody id="sheet-body">
-            <tr><td colspan="4" class="empty-state">尚無資料，請至「填寫表單」新增紀錄</td></tr>
+            <tr><td colspan="5" class="empty-state">尚無資料，請至「填寫表單」新增紀錄</td></tr>
           </tbody>
         </table>
       </div>
@@ -176,7 +187,12 @@
       </div>
       <div id="stats-content" style="display:none;">
         <div class="toolbar">
-          <span style="font-size:13px;color:var(--text-muted);" id="stats-period"></span>
+          <div class="toolbar-left">
+            <select class="month-select" id="stats-month-select" onchange="renderStats()">
+              <option value="all">全部月份</option>
+            </select>
+            <span style="font-size:13px;color:var(--text-muted);" id="stats-period"></span>
+          </div>
           <div class="export-group">
             <button class="btn-action" onclick="exportStatsPNG()">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16l4-4 4 4 4-6 4 6M3 3h18v18H3z"/></svg>
@@ -226,6 +242,33 @@ const PALETTE = ['#2D4A3E','#4A7A68','#7AADA0','#B8D5C8','#D4E8E0'];
 let currentCat = '', selectedTags = new Set(), records = [];
 let catChartInst = null, tagChartInst = null;
 
+function getMonthKey(ts) {
+  const parts = ts.split('/');
+  if (parts.length >= 2) return parts[0] + '/' + parts[1];
+  return ts;
+}
+
+function updateMonthSelects() {
+  const months = [...new Set(records.map(r => getMonthKey(r.ts)))].sort();
+  ['sheet-month-select','stats-month-select'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">全部月份</option>';
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m + ' 月';
+      sel.appendChild(opt);
+    });
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  });
+}
+
+function filteredRecords(selectId) {
+  const val = document.getElementById(selectId).value;
+  if (val === 'all') return records;
+  return records.filter(r => getMonthKey(r.ts) === val);
+}
+
 function switchPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -266,20 +309,36 @@ function submitForm() {
   if (!currentCat) { alert('請先選擇問題類別'); return; }
   const now = new Date();
   const ts = now.toLocaleDateString('zh-TW') + ' ' + now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
-  records.push({ ts, cat: CAT_LABELS[currentCat], tags: [...selectedTags], note: document.getElementById('note').value.trim() });
-  renderSheet(); showToast(); resetForm();
+  records.push({ id: Date.now(), ts, cat: CAT_LABELS[currentCat], tags: [...selectedTags], note: document.getElementById('note').value.trim() });
+  updateMonthSelects();
+  renderSheet();
+  showToast();
+  resetForm();
+}
+
+function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆紀錄？')) return;
+  records = records.filter(r => r.id !== id);
+  updateMonthSelects();
+  renderSheet();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
 }
 
 function renderSheet() {
+  const filtered = filteredRecords('sheet-month-select');
   const tbody = document.getElementById('sheet-body');
-  document.getElementById('record-count').textContent = records.length + ' 筆紀錄';
-  if (!records.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">尚無資料</td></tr>'; return; }
-  tbody.innerHTML = records.map((r,i) => `
-    <tr class="${i===records.length-1?'new-row':''}">
-      <td style="white-space:nowrap;color:var(--text-muted);">${r.ts}</td>
+  document.getElementById('record-count').textContent = filtered.length + ' 筆紀錄';
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">此月份尚無資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map((r, i) => `
+    <tr class="${i === filtered.length-1 ? 'new-row' : ''}">
+      <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
       <td><span class="cat-badge">${r.cat}</span></td>
       <td>${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="color:${r.note?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
+      <td><button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button></td>
     </tr>`).join('');
 }
 
@@ -298,51 +357,58 @@ function resetForm() {
   updateChar();
 }
 
-function dateStr() {
-  return new Date().toLocaleDateString('zh-TW').replace(/\//g,'');
-}
+function dateStr() { return new Date().toLocaleDateString('zh-TW').replace(/\//g,''); }
 
 function autoColWidth(ws, data) {
-  const cols = Object.keys(data[0] || {});
-  ws['!cols'] = cols.map(key => ({
-    wch: Math.min(40, Math.max(10, ...data.map(r => String(r[key]||'').length), key.length) + 2)
-  }));
+  if (!data.length) return;
+  const cols = Object.keys(data[0]);
+  ws['!cols'] = cols.map(key => ({ wch: Math.min(40, Math.max(10, ...data.map(r => String(r[key]||'').length), key.length) + 2) }));
 }
 
 function exportSheetXLSX() {
-  if (!records.length) { alert('尚無資料可匯出'); return; }
-  const data = records.map(r => ({
-    '時間': r.ts,
-    '類別': r.cat,
-    '標籤': r.tags.join('／') || '—',
-    '補充說明': r.note || '—'
-  }));
+  const filtered = filteredRecords('sheet-month-select');
+  if (!filtered.length) { alert('此月份尚無資料可匯出'); return; }
+  const data = filtered.map(r => ({ '時間': r.ts, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
   const ws = XLSX.utils.json_to_sheet(data);
   autoColWidth(ws, data);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '客服紀錄');
-  XLSX.writeFile(wb, `客服紀錄_${dateStr()}.xlsx`);
+  const monthVal = document.getElementById('sheet-month-select').value;
+  XLSX.utils.book_append_sheet(wb, ws, monthVal === 'all' ? '全部紀錄' : monthVal+'月');
+  XLSX.writeFile(wb, `客服紀錄_${monthVal === 'all' ? '全部' : monthVal.replace('/','')}_${dateStr()}.xlsx`);
 }
 
 function renderStats() {
   const noData = document.getElementById('no-data-msg');
   const content = document.getElementById('stats-content');
+  const filtered = filteredRecords('stats-month-select');
+
   if (!records.length) { noData.style.display='block'; content.style.display='none'; return; }
   noData.style.display='none'; content.style.display='block';
 
+  if (!filtered.length) {
+    document.getElementById('stat-total').textContent = '0';
+    document.getElementById('stat-top-cat').textContent = '—';
+    document.getElementById('stat-top-tag').textContent = '—';
+    document.getElementById('stat-cat-count').textContent = '0';
+    document.getElementById('stats-period').textContent = '此月份尚無資料';
+    if (catChartInst) { catChartInst.destroy(); catChartInst = null; }
+    if (tagChartInst) { tagChartInst.destroy(); tagChartInst = null; }
+    return;
+  }
+
   const catCount = {}, tagCount = {};
-  records.forEach(r => {
+  filtered.forEach(r => {
     catCount[r.cat] = (catCount[r.cat]||0) + 1;
     r.tags.forEach(t => { tagCount[t] = (tagCount[t]||0) + 1; });
   });
 
-  document.getElementById('stat-total').textContent = records.length;
+  document.getElementById('stat-total').textContent = filtered.length;
   const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
   const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById('stat-top-cat').textContent = topCat ? `${topCat[0]}（${topCat[1]}件）` : '—';
   document.getElementById('stat-top-tag').textContent = topTag ? `${topTag[0]}（${topTag[1]}件）` : '—';
   document.getElementById('stat-cat-count').textContent = Object.keys(catCount).length;
-  document.getElementById('stats-period').textContent = `共 ${records.length} 筆紀錄`;
+  document.getElementById('stats-period').textContent = `共 ${filtered.length} 筆`;
 
   const catLabels = Object.keys(catCount);
   if (catChartInst) catChartInst.destroy();
@@ -367,25 +433,24 @@ function renderStats() {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { font: { family:'Noto Sans TC', size:11 }, color:'#7A7570', stepSize:1 }, grid: { color:'rgba(0,0,0,0.05)' }, beginAtZero: true },
-        y: { ticks: { font: { family:'Noto Sans TC', size:11 }, color:'#7A7570' }, grid: { display:false } }
+        x: { ticks: { font:{family:'Noto Sans TC',size:11}, color:'#7A7570', stepSize:1 }, grid:{color:'rgba(0,0,0,0.05)'}, beginAtZero: true },
+        y: { ticks: { font:{family:'Noto Sans TC',size:11}, color:'#7A7570' }, grid:{display:false} }
       }
     }
   });
 }
 
 function exportStatsPNG() {
-  if (!records.length) { alert('尚無資料'); return; }
-  renderStats();
+  const filtered = filteredRecords('stats-month-select');
+  if (!filtered.length) { alert('此月份尚無資料'); return; }
   setTimeout(() => {
-    [['catChart','類別分佈'], ['tagChart','標籤統計']].forEach(([id, name]) => {
+    [['catChart','類別分佈'],['tagChart','標籤統計']].forEach(([id,name]) => {
       const canvas = document.getElementById(id);
       const bg = document.createElement('canvas');
       bg.width = canvas.width; bg.height = canvas.height;
       const ctx = bg.getContext('2d');
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, bg.width, bg.height);
-      ctx.drawImage(canvas, 0, 0);
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,bg.width,bg.height);
+      ctx.drawImage(canvas,0,0);
       const a = document.createElement('a');
       a.href = bg.toDataURL('image/png');
       a.download = `客服統計_${name}_${dateStr()}.png`;
@@ -395,52 +460,34 @@ function exportStatsPNG() {
 }
 
 function exportStatsXLSX() {
-  if (!records.length) { alert('尚無資料'); return; }
+  const filtered = filteredRecords('stats-month-select');
+  if (!filtered.length) { alert('此月份尚無資料'); return; }
   const catCount = {}, tagCount = {};
-  records.forEach(r => {
+  filtered.forEach(r => {
     catCount[r.cat] = (catCount[r.cat]||0) + 1;
     r.tags.forEach(t => { tagCount[t] = (tagCount[t]||0) + 1; });
   });
-
-  const catData = Object.entries(catCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({
-    '類別': k,
-    '件數': v,
-    '佔比': Math.round(v / records.length * 100) + '%'
-  }));
-  const tagData = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({
-    '標籤': k,
-    '件數': v
-  }));
+  const catData = Object.entries(catCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '類別':k, '件數':v, '佔比': Math.round(v/filtered.length*100)+'%' }));
+  const tagData = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '標籤':k, '件數':v }));
+  const monthVal = document.getElementById('stats-month-select').value;
   const summaryData = [
-    { '項目': '統計日期', '內容': new Date().toLocaleDateString('zh-TW') },
-    { '項目': '總筆數',   '內容': records.length },
-    { '項目': '最多類別', '內容': catData[0]?.['類別'] || '—' },
-    { '項目': '最熱標籤', '內容': tagData[0]?.['標籤'] || '—' },
+    { '項目':'統計日期', '內容': new Date().toLocaleDateString('zh-TW') },
+    { '項目':'篩選月份', '內容': monthVal === 'all' ? '全部' : monthVal },
+    { '項目':'總筆數',   '內容': filtered.length },
+    { '項目':'最多類別', '內容': catData[0]?.['類別'] || '—' },
+    { '項目':'最熱標籤', '內容': tagData[0]?.['標籤'] || '—' },
   ];
-
   const wb = XLSX.utils.book_new();
-
   const wsSummary = XLSX.utils.json_to_sheet(summaryData);
-  wsSummary['!cols'] = [{ wch: 14 }, { wch: 20 }];
+  wsSummary['!cols'] = [{wch:14},{wch:20}];
   XLSX.utils.book_append_sheet(wb, wsSummary, '摘要');
-
   const wsCat = XLSX.utils.json_to_sheet(catData);
   autoColWidth(wsCat, catData);
   XLSX.utils.book_append_sheet(wb, wsCat, '類別統計');
-
   const wsTag = XLSX.utils.json_to_sheet(tagData);
   autoColWidth(wsTag, tagData);
   XLSX.utils.book_append_sheet(wb, wsTag, '標籤統計');
-
-  XLSX.writeFile(wb, `客服統計_${dateStr()}.xlsx`);
-}
-
-function autoColWidth(ws, data) {
-  if (!data.length) return;
-  const cols = Object.keys(data[0]);
-  ws['!cols'] = cols.map(key => ({
-    wch: Math.min(40, Math.max(10, ...data.map(r => String(r[key]||'').length), key.length) + 2)
-  }));
+  XLSX.writeFile(wb, `客服統計_${monthVal==='all'?'全部':monthVal.replace('/','')}_${dateStr()}.xlsx`);
 }
 </script>
 </body>
