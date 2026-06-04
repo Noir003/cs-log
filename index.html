@@ -180,7 +180,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th></tr></thead>
+          <thead><tr><th>時間</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
           <tbody id="sheet-body">
             <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
           </tbody>
@@ -241,6 +241,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+function formatTs(raw) {
+  if (!raw) return '';
+  // Handle ISO format: 2026-06-04T03:48:00.000Z
+  if (raw.includes('T')) {
+    const d = new Date(raw);
+    if (!isNaN(d)) {
+      return d.toLocaleDateString('zh-TW') + ' ' + d.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+    }
+  }
+  return raw;
+}
+
 const API_URL = 'https://script.google.com/macros/s/AKfycby3oz5IoKVdguE79vL8lBeP0nj8-YBxu0BYQDqiFaJbcdVYkUT72lNjUbKedueXwySs/exec';
 
 const TAGS = {
@@ -361,7 +373,7 @@ async function loadFromSheets() {
     const noteIdx = header.indexOf('補充說明');
     records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
       id: i,
-      ts: r[tsIdx] || '',
+      ts: formatTs(r[tsIdx] || ''),
       cat: r[catIdx] || '',
       tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
       note: r[noteIdx] || ''
@@ -392,7 +404,16 @@ function renderSheet() {
       <td><span class="cat-badge">${r.cat}</span></td>
       <td>${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="color:${r.note && r.note!=='—'?'var(--text)':'var(--text-hint)'};">${r.note||'—'}</td>
+      <td><button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button></td>
     </tr>`).join('');
+}
+
+function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆紀錄？\n（只從網頁移除，Google Sheets 不受影響）')) return;
+  records = records.filter(r => r.id !== id);
+  updateMonthSelects();
+  renderSheet();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
 }
 
 function showToast(msg, isError) {
