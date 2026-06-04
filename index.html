@@ -450,11 +450,8 @@ async function deleteRecord(id) {
   renderSheet();
   if (document.getElementById('page-stats').classList.contains('active')) renderStats();
   try {
-    await fetch(API_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', ts: r.ts, cat: r.cat, note: r.note })
-    });
+    const params = new URLSearchParams({ action: 'delete', ts: r.ts });
+    await fetch(API_URL + '?' + params.toString(), { mode: 'no-cors' });
   } catch(err) {
     console.error('刪除同步失敗', err);
   }
