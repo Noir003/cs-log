@@ -8,7 +8,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #F5F3EE; --surface: #FFFFFF; --border: #DDDDFF; --border-strong: #C8C2B8;
+    --bg: #F3F3FA; --surface: #FFFFFF; --border: #DDDDFF; --border-strong: #C8C2B8;
     --text: #1A1814; --text-muted: #7A7570; --text-hint: #B0AAA3;
     --accent: #2D4A3E; --accent-light: #E8F0ED; --accent-mid: #4A7A68;
     --tag-bg: #F0EDE8; --tag-active-bg: #2D4A3E; --tag-active-text: #FFFFFF;
@@ -51,7 +51,8 @@
   .page-header { margin-bottom: 1.75rem; }
   .page-title { font-size: 20px; font-weight: 700; }
   .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  #page-form .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  #page-form .cat-btn { background: #FAF4FF; }
   .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
   .field-label .req { color: var(--danger); font-size: 14px; line-height: 1; }
   .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
@@ -73,10 +74,10 @@
   .form-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
   .btn-reset { font-size: 13px; color: var(--text-hint); background: none; border: none; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: color 0.15s; }
   .btn-reset:hover { color: var(--text-muted); }
-  .btn-submit { padding: 11px 28px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; }
-  .btn-submit:hover { background: #3a6152; }
+  .btn-submit { padding: 11px 28px; background: #FAF4FF; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .btn-submit:hover { background: #EDE4FF; }
   .btn-submit:active { transform: scale(0.98); }
-  .btn-submit:disabled { background: #7AADA0; cursor: not-allowed; }
+  .btn-submit:disabled { background: #E8E0F0; cursor: not-allowed; }
   .toast { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--success-bg); border: 1px solid #B8D5C8; border-radius: var(--radius-sm); color: var(--success-text); font-size: 13px; margin-bottom: 1rem; font-weight: 500; }
   .toast.show { display: flex; }
   .toast.error { background: var(--danger-light); border-color: #D4856F; color: var(--danger); }
@@ -85,10 +86,10 @@
   .record-count { font-size: 13px; color: var(--text-muted); background: var(--tag-bg); padding: 5px 12px; border-radius: 20px; }
   .month-select { padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; outline: none; }
   .month-select:focus { border-color: var(--accent-mid); }
-  .btn-action { padding: 8px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-  .btn-action:hover { background: var(--tag-bg); }
-  .btn-action.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn-action.primary:hover { background: #3a6152; }
+  .btn-action { padding: 8px 16px; background: #FAF4FF; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-action:hover { background: #EDE4FF; }
+  .btn-action.primary { background: #FAF4FF; color: var(--text); border-color: var(--border); }
+  .btn-action.primary:hover { background: #EDE4FF; }
   .export-group { display: flex; gap: 8px; flex-wrap: wrap; }
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
