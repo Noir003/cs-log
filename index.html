@@ -58,13 +58,13 @@
   .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
   .cat-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--tag-bg); color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500; }
   .cat-btn:hover { border-color: var(--accent-mid); color: var(--accent); }
-  .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cat-btn.active { background: #EDE4FF; border-color: #C5B0F0; color: #3D3580; }
   .tags-section { overflow: hidden; max-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
   .tags-section.visible { max-height: 300px; opacity: 1; }
   .tags-wrap { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 2px; }
-  .tag { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-strong); background: #fff; color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
-  .tag:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
-  .tag.active { background: var(--tag-active-bg); border-color: var(--tag-active-bg); color: var(--tag-active-text); }
+  .tag { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: #FAF4FF; color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .tag:hover { border-color: #C5B0F0; color: #3D3580; background: #EDE4FF; }
+  .tag.active { background: #EDE4FF; border-color: #C5B0F0; color: #3D3580; }
   textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; resize: vertical; min-height: 96px; outline: none; transition: border-color 0.15s; line-height: 1.6; }
   textarea:focus { border-color: var(--accent-mid); }
   textarea::placeholder { color: var(--text-hint); }
