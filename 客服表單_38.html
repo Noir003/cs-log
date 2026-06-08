@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客服紀錄表單</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F3F3FA; --surface: #FFFFFF; --border: #DDDDFF; --border-strong: #C8C2B8;
+    --text: #1A1814; --text-muted: #7A7570; --text-hint: #B0AAA3;
+    --accent: #2D4A3E; --accent-light: #E8F0ED; --accent-mid: #4A7A68;
+    --tag-bg: #F0EDE8; --tag-active-bg: #2D4A3E; --tag-active-text: #FFFFFF;
+    --danger: #8B3A2A; --danger-light: #F9EDEA;
+    --success-bg: #E8F0ED; --success-text: #2D4A3E;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAABT0lEQVR4nO1YwQ2DMAw0VZdD8GIGhmAEhmAGXiDGS1+mBlLHjo0EFfcCBMdhX9xLAR48eHBvFJ5kU9sFPK6H3oX77UGCwqqm/F4DCAB2oS+TMgIqLnaeC7PAqe3CLzFVU27angNxi738peVJCvTyVy6PqMWcv+qhL+ZxiT43j8vm5Tk+ZQVq/LUXSc8tPnUZM1glbBm9ZoWLQISXKAq2xRp/ncUjWiScvzTI4Ym2ODarOH9xJsd7c326EaiZVVQUNy72grQ+PVQwNqv2reDGBsc3AQStwPXm1EupSEsQQB6pUNWY8UgoyCGtplvcOgurwNSs8sp3CGkUO1TQa+Z5IeqB/Zd5V48i9UsSXST0AWsituI+i+SquL9AbvxYIYls968gwDlVlAbey1dQFX1ieVELbZrJ2uRo8iCFZh+DcPkLQ5ojc3Z9LttEyZ7kb/EBrC3bMjcH+HIAAAAASUVORK5CYII=") 16 8, auto; }
+  .sakura, .snow {
+    position: fixed; top: -20px; pointer-events: none; z-index: 9999;
+    animation: sakuraFall linear infinite;
+  }
+  @keyframes sakuraFall {
+    0%   { transform: translateY(-20px) rotate(0deg) translateX(0px); opacity: 0.9; }
+    25%  { transform: translateY(25vh) rotate(90deg) translateX(30px); }
+    50%  { transform: translateY(50vh) rotate(180deg) translateX(-20px); }
+    75%  { transform: translateY(75vh) rotate(270deg) translateX(25px); }
+    100% { transform: translateY(110vh) rotate(360deg) translateX(-10px); opacity: 0; }
+  }
+  @keyframes snowFall {
+    0%   { transform: translateY(-10px) translateX(0px); opacity: 0.8; }
+    25%  { transform: translateY(25vh) translateX(8px); }
+    50%  { transform: translateY(50vh) translateX(-8px); }
+    75%  { transform: translateY(75vh) translateX(5px); }
+    100% { transform: translateY(110vh) translateX(-5px); opacity: 0.2; }
+  }
+  .snow { animation-name: snowFall; }
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 200px; flex-shrink: 0; background: #F3F3FA; padding: 2rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+  .sidebar-logo { color: #3D3580; font-size: 15px; font-weight: 700; letter-spacing: 0.05em; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(100,80,180,0.2); }
+  .sidebar-logo span { display: block; font-size: 11px; font-weight: 400; color: #8880BB; margin-top: 3px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); color: #7070AA; font-size: 13px; cursor: pointer; transition: background 0.15s, color 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: 'Noto Sans TC', sans-serif; }
+  .nav-item:hover { background: rgba(100,80,180,0.08); color: #3D3580; }
+  .nav-item.active { background: rgba(100,80,180,0.12); color: #3D3580; }
+  .nav-icon { width: 18px; height: 18px; opacity: 0.9; flex-shrink: 0; }
+  .main { flex: 1; overflow-y: auto; padding: 2rem 2.5rem; max-width: 1400px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 1.75rem; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  #page-form .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  #page-form .cat-btn { background: #FAF4FF; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .field-label .req { color: var(--danger); font-size: 14px; line-height: 1; }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .cat-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--tag-bg); color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500; }
+  .cat-btn:hover { border-color: var(--accent-mid); color: var(--accent); }
+  .cat-btn.active { background: #EDE4FF; border-color: #C5B0F0; color: #3D3580; }
+  .tags-section { overflow: hidden; max-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
+  .tags-section.visible { max-height: 300px; opacity: 1; }
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 2px; }
+  .tag { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: #FAF4FF; color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .tag:hover { border-color: #C5B0F0; color: #3D3580; background: #EDE4FF; }
+  .tag.active { background: #EDE4FF; border-color: #C5B0F0; color: #3D3580; }
+  textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; resize: vertical; min-height: 96px; outline: none; transition: border-color 0.15s; line-height: 1.6; }
+  textarea:focus { border-color: var(--accent-mid); }
+  textarea::placeholder { color: var(--text-hint); }
+  .char-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .char-count { font-size: 11px; color: var(--text-hint); }
+  .char-count.warn { color: var(--danger); }
+  .form-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
+  .btn-reset { font-size: 13px; color: var(--text-hint); background: none; border: none; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: color 0.15s; }
+  .btn-reset:hover { color: var(--text-muted); }
+  .btn-submit { padding: 11px 28px; background: #FAF4FF; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .btn-submit:hover { background: #EDE4FF; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: #E8E0F0; cursor: not-allowed; }
+  .toast { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--success-bg); border: 1px solid #B8D5C8; border-radius: var(--radius-sm); color: var(--success-text); font-size: 13px; margin-bottom: 1rem; font-weight: 500; }
+  .toast.show { display: flex; }
+  .toast.error { background: var(--danger-light); border-color: #D4856F; color: var(--danger); }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+  .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .record-count { font-size: 13px; color: var(--text-muted); background: var(--tag-bg); padding: 5px 12px; border-radius: 20px; }
+  .month-select { padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; outline: none; }
+  .month-select:focus { border-color: var(--accent-mid); }
+  .btn-action { padding: 8px 16px; background: #FAF4FF; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-action:hover { background: #EDE4FF; }
+  .btn-action.primary { background: #FAF4FF; color: var(--text); border-color: var(--border); }
+  .btn-action.primary:hover { background: #EDE4FF; }
+  .export-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  thead tr { background: var(--bg); }
+  th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFAF8; }
+  .cat-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--accent-light); color: var(--accent); }
+  .tag-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--tag-bg); color: var(--text-muted); margin: 2px 2px 0 0; }
+  .empty-state { padding: 3rem; text-align: center; color: var(--text-hint); font-size: 14px; }
+  .btn-delete { padding: 4px 10px; background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hint); font-family: 'Noto Sans TC', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn-delete:hover { background: var(--danger-light); border-color: #D4856F; color: var(--danger); }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
+  .metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .metric-val { font-size: 26px; font-weight: 700; color: var(--accent); }
+  .metric-val-sm { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .sync-status { font-size: 12px; color: var(--text-hint); display: flex; align-items: center; gap: 5px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #7AADA0; }
+  .sync-dot.ok { background: #4A7A68; }
+  .sync-dot.err { background: var(--danger); }
+  @media (max-width: 640px) { .sidebar { display: none; } .main { padding: 1.25rem; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">雅鄔樂 客服紀錄系統<span>AURA Customer Service Log</span></div>
+    <nav style="display:flex;flex-direction:column;gap:4px;flex:1;">
+      <button class="nav-item active" onclick="switchPage('form',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12h6M9 16h4M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2M9 4a2 2 0 002 2h2a2 2 0 002-2M9 4a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        填寫表單
+      </button>
+      <button class="nav-item" onclick="switchPage('sheet',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 10h18M3 14h18M10 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>
+        資料彙整
+      </button>
+      <button class="nav-item" onclick="switchPage('stats',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        統計圖表
+      </button>
+    </nav>
+    <div style="border-top:1px solid rgba(100,80,180,0.2);padding-top:1rem;margin-top:auto;">
+      <div style="font-size:11px;color:#8880BB;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">目前使用者</div>
+      <div style="font-size:13px;color:#3D3580;font-weight:500;margin-bottom:8px;" id="sidebar-username">未登入</div>
+      <button onclick="resetUser()" style="font-size:11px;color:#8880BB;background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;padding:0;transition:color 0.15s;" onmouseover="this.style.color='#3D3580'" onmouseout="this.style.color='#8880BB'">切換使用者</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- 填寫表單 -->
+    <div id="page-form" class="page active">
+      <div class="page-header">
+        <div class="page-title">新增客訴紀錄</div>
+        <div class="page-subtitle">填寫後點擊「送出紀錄」，資料將自動存入 Google Sheets</div>
+      </div>
+      <div id="toast" class="toast">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <span id="toast-msg">已成功送出！</span>
+      </div>
+      <div class="form-card">
+        <div class="field-label"><span class="req">*</span> 來源</div>
+        <div class="cat-grid">
+          <button class="cat-btn" onclick="selectSource('FB/LINE',this)">FB／LINE</button>
+          <button class="cat-btn" onclick="selectSource('電話',this)">電話</button>
+          <button class="cat-btn" onclick="selectSource('網路平台',this)">網路平台（官網／蝦皮）</button>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="field-label"><span class="req">*</span> 問題類別</div>
+        <div class="cat-grid">
+          <button class="cat-btn" onclick="selectCat('product',this)">商品問題</button>
+          <button class="cat-btn" onclick="selectCat('usage',this)">使用方式</button>
+          <button class="cat-btn" onclick="selectCat('emptybox',this)">空盒活動</button>
+          <button class="cat-btn" onclick="selectCat('order',this)">訂單問題</button>
+          <button class="cat-btn" onclick="selectCat('return',this)">退貨</button>
+          <button class="cat-btn" onclick="selectCat('other',this)">其他</button>
+        </div>
+      </div>
+      <div class="form-card tags-section" id="tags-section">
+        <div class="field-label">關鍵字標籤 <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-hint);">可複選</span></div>
+        <div class="tags-wrap" id="tags-wrap"></div>
+      </div>
+      <div class="form-card tags-section" id="other-note-section">
+        <div class="field-label">其他問題說明 <span class="req">*</span></div>
+        <input id="other-note-input" type="text" maxlength="50" placeholder="請簡短描述問題類型" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;background:#fff;color:var(--text);" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div class="form-card">
+        <div class="field-label">會員資料 <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-hint);">選填</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">姓名</div>
+            <input id="member-name" type="text" placeholder="會員姓名" maxlength="20" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">手機號碼</div>
+            <input id="member-phone" type="tel" placeholder="09xxxxxxxx" maxlength="10" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="field-label">補充說明</div>
+        <textarea id="note" maxlength="150" placeholder="請輸入補充內容（選填，最多 150 字）" oninput="updateChar()"></textarea>
+        <div class="char-row"><span class="char-count" id="char-count">0 / 150</span></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-reset" onclick="resetForm()">↺ 清除重填</button>
+        <button class="btn-submit" id="submit-btn" onclick="submitForm()">送出紀錄</button>
+      </div>
+    </div>
+
+    <!-- 資料彙整 -->
+    <div id="page-sheet" class="page">
+      <div class="page-header">
+        <div class="page-title">資料彙整</div>
+        <div class="page-subtitle">資料來自 Google Sheets，即時同步</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="month-select" id="sheet-month-select" onchange="renderSheet()">
+            <option value="all">全部月份</option>
+          </select>
+          <span class="record-count" id="record-count">0 筆紀錄</span>
+          <span class="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">尚未載入</span></span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-action" onclick="loadFromSheets()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            重新載入
+          </button>
+          <button class="btn-action" onclick="exportSheetXLSX()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            匯出 Excel（.xlsx）
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>時間</th><th>填寫人</th><th>來源</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
+          <tbody id="sheet-body">
+            <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 統計圖表 -->
+    <div id="page-stats" class="page">
+      <div class="page-header">
+        <div class="page-title">統計圖表</div>
+        <div class="page-subtitle">根據 Google Sheets 資料自動計算</div>
+      </div>
+      <div id="no-data-msg" style="text-align:center;color:var(--text-hint);font-size:14px;padding:3rem 0;">
+        尚無資料，請先至「資料彙整」點擊重新載入
+      </div>
+      <div id="stats-content" style="display:none;">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <select class="month-select" id="stats-month-select" onchange="renderStats()">
+              <option value="all">全部月份</option>
+            </select>
+            <span style="font-size:13px;color:var(--text-muted);" id="stats-period"></span>
+          </div>
+          <div class="export-group">
+            <button class="btn-action" onclick="exportStatsPNG()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16l4-4 4 4 4-6 4 6M3 3h18v18H3z"/></svg>
+              匯出圖表（PNG）
+            </button>
+            <button class="btn-action primary" onclick="exportStatsXLSX()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              匯出數據（.xlsx）
+            </button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card"><div class="metric-label">總筆數</div><div class="metric-val" id="stat-total">0</div></div>
+          <div class="metric-card"><div class="metric-label">最多類別</div><div class="metric-val-sm" id="stat-top-cat">—</div></div>
+          <div class="metric-card"><div class="metric-label">最熱標籤</div><div class="metric-val-sm" id="stat-top-tag">—</div></div>
+          <div class="metric-card"><div class="metric-label">類別數</div><div class="metric-val" id="stat-cat-count">0</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="form-card">
+            <div class="field-label">類別分佈</div>
+            <div style="position:relative;height:240px;"><canvas id="catChart" role="img" aria-label="類別分佈圓餅圖"></canvas></div>
+          </div>
+          <div class="form-card">
+            <div class="field-label">標籤統計</div>
+            <div style="position:relative;height:240px;"><canvas id="tagChart" role="img" aria-label="標籤件數橫條圖"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+function formatTs(raw) {
+  if (!raw) return '';
+  if (raw.includes('T')) {
+    const d = new Date(raw);
+    if (!isNaN(d)) {
+      const y = d.getFullYear();
+      const mo = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const h = d.getHours();
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      const ampm = h < 12 ? '上午' : '下午';
+      const h12 = String(h < 12 ? h : h - 12).padStart(2,'0');
+      return `${y}/${mo}/${day} ${ampm} ${h12}:${mi}`;
+    }
+  }
+  return raw;
+}
+
+const API_URL = 'https://script.google.com/macros/s/AKfycby3oz5IoKVdguE79vL8lBeP0nj8-YBxu0BYQDqiFaJbcdVYkUT72lNjUbKedueXwySs/exec';
+
+const TAGS = {
+  product:  ['商品瑕疵','過敏','安全疑慮'],
+  usage:    ['光彩','海藻','淨化液','塗抹方式','用量','衣物變色','手變色'],
+  emptybox: ['問地址','問收寄進度'],
+  order:    ['修改','取消','內容錯誤','問進度'],
+  return:   [],
+  other:    []
+};
+const CAT_LABELS = { product:'商品問題', usage:'使用方式', emptybox:'空盒活動', order:'訂單問題', return:'退貨', other:'其他' };
+// 顏色對應類別順序：商品問題、使用方式、空盒活動、訂單問題、退貨、其他
+const CAT_COLOR_MAP = {
+  '商品問題': '#FFCBB3',
+  '使用方式': '#FF9797',
+  '空盒活動': '#B3D9D9',
+  '訂單問題': '#9B59B6',
+  '退貨':     '#E74C3C',
+  '其他':     '#E07B39'
+};
+const PALETTE = ['#FFCBB3','#FF9797','#B3D9D9','#9B59B6','#E74C3C','#E07B39'];
+
+let currentCat = '', selectedTags = new Set(), records = [];
+let catChartInst = null, tagChartInst = null;
+
+function getMonthKey(ts) {
+  const parts = ts.split('/');
+  if (parts.length >= 2) return parts[0] + '/' + parts[1];
+  return ts;
+}
+
+function updateMonthSelects() {
+  const months = [...new Set(records.map(r => getMonthKey(r.ts)))].sort();
+  ['sheet-month-select','stats-month-select'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">全部月份</option>';
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m + ' 月';
+      sel.appendChild(opt);
+    });
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  });
+}
+
+function filteredRecords(selectId) {
+  const val = document.getElementById(selectId).value;
+  if (val === 'all') return records;
+  return records.filter(r => getMonthKey(r.ts) === val);
+}
+
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'sheet') loadFromSheets();
+  if (id === 'stats') { loadFromSheets(); }
+}
+
+function selectCat(cat, btn) {
+  currentCat = cat; selectedTags.clear();
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const section = document.getElementById('tags-section');
+  const otherSection = document.getElementById('other-note-section');
+  const wrap = document.getElementById('tags-wrap');
+  const tags = TAGS[cat] || [];
+
+  // 顯示隱藏其他說明框
+  if (cat === 'other') {
+    otherSection.classList.add('visible');
+    document.getElementById('other-note-input').value = '';
+  } else {
+    otherSection.classList.remove('visible');
+  }
+
+  if (!tags.length) { section.classList.remove('visible'); return; }
+  wrap.innerHTML = '';
+  tags.forEach(t => {
+    const el = document.createElement('button');
+    el.className = 'tag'; el.textContent = t;
+    el.onclick = () => {
+      if (selectedTags.has(t)) { selectedTags.delete(t); el.classList.remove('active'); }
+      else { selectedTags.add(t); el.classList.add('active'); }
+    };
+    wrap.appendChild(el);
+  });
+  section.classList.add('visible');
+}
+
+function updateChar() {
+  const n = document.getElementById('note').value.length;
+  const el = document.getElementById('char-count');
+  el.textContent = n + ' / 150';
+  el.className = 'char-count' + (n > 130 ? ' warn' : '');
+}
+
+async function submitForm() {
+  if (!currentCat) { alert('請先選擇問題類別'); return; }
+  if (!currentSource) { alert('請先選擇來源'); return; }
+  if (currentCat === 'other') {
+    const otherNote = document.getElementById('other-note-input').value.trim();
+    if (!otherNote) { alert('請填寫其他問題說明'); return; }
+    selectedTags.clear();
+    selectedTags.add(otherNote);
+  }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '送出中…';
+  const now = new Date();
+  const y = now.getFullYear();
+  const mo = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const h = now.getHours();
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const ampm = h < 12 ? '上午' : '下午';
+  const h12 = String(h < 12 ? h : h - 12).padStart(2,'0');
+  const ts = `${y}/${mo}/${d} ${ampm} ${h12}:${mi}`;
+  const payload = {
+    ts, cat: CAT_LABELS[currentCat],
+    tags: [...selectedTags].join('／') || '—',
+    note: document.getElementById('note').value.trim() || '—',
+    name: document.getElementById('member-name').value.trim() || '—',
+    phone: document.getElementById('member-phone').value.trim() || '—',
+    source: currentSource,
+    filledBy: currentUser || '未知'
+  };
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    showToast('已成功送出！資料已存入 Google Sheets', false);
+    resetForm();
+  } catch(err) {
+    showToast('送出失敗，請確認網路連線', true);
+  }
+  btn.disabled = false; btn.textContent = '送出紀錄';
+}
+
+async function loadFromSheets(retryCount = 0) {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  text.textContent = retryCount > 0 ? '重試中…' : '載入中…'; dot.className = 'sync-dot';
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now());
+    const json = await res.json();
+    if (!json.data) throw new Error('no data');
+    const rows = json.data || [];
+    const header = rows[0] || [];
+    const tsIdx = header.indexOf('時間');
+    const catIdx = header.indexOf('類別');
+    const tagsIdx = header.indexOf('標籤');
+    const noteIdx = header.indexOf('補充說明');
+    const nameIdx = header.indexOf('姓名');
+    const phoneIdx = header.indexOf('手機');
+    const sourceIdx = header.indexOf('來源');
+    const filledByIdx = header.indexOf('填寫人');
+    records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
+      id: i,
+      rowIndex: i + 2,
+      ts: formatTs(r[tsIdx] || ''),
+      cat: r[catIdx] || '',
+      tags: r[tagsIdx] ? r[tagsIdx].split('／').filter(t => t && t !== '—') : [],
+      note: r[noteIdx] || '',
+      name: r[nameIdx] || '—',
+      phone: r[phoneIdx] || '—',
+      source: r[sourceIdx] || '—',
+      filledBy: r[filledByIdx] || '—'
+    }));
+    updateMonthSelects();
+    renderSheet();
+    renderStats();
+    dot.className = 'sync-dot ok';
+    text.textContent = '已同步 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+    return; // 成功就結束，不再重試
+  } catch(err) {
+    if (retryCount < 2) {
+      setTimeout(() => loadFromSheets(retryCount + 1), 2000);
+    } else {
+      dot.className = 'sync-dot err';
+      text.textContent = '載入失敗';
+      document.getElementById('sheet-body').innerHTML = '<tr><td colspan="9" class="empty-state">載入失敗，請點「重新載入」再試</td></tr>';
+    }
+  }
+}
+
+function renderSheet() {
+  const filtered = filteredRecords('sheet-month-select');
+  const tbody = document.getElementById('sheet-body');
+  document.getElementById('record-count').textContent = filtered.length + ' 筆紀錄';
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">此月份尚無資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
+      <td style="white-space:nowrap;font-size:13px;color:${r.filledBy!=='—'?'var(--text)':'var(--text-hint)'};">${r.filledBy}</td>
+      <td style="white-space:nowrap;color:${r.source!=='—'?'var(--text)':'var(--text-hint)'};">${r.source}</td>
+      <td style="white-space:nowrap;color:${r.name!=='—'?'var(--text)':'var(--text-hint)'};">${r.name}</td>
+      <td style="white-space:nowrap;color:${r.phone!=='—'?'var(--text)':'var(--text-hint)'};">${r.phone}</td>
+      <td style="white-space:nowrap;"><span class="cat-badge">${r.cat}</span></td>
+      <td style="white-space:nowrap;">${r.tags.length ? r.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('') : '<span style="color:var(--text-hint)">—</span>'}</td>
+      <td style="min-width:200px;max-width:320px;">${r.note && r.note!=='—' ? r.note : '<span style="color:var(--text-hint)">—</span>'}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-delete" style="margin-right:4px;" onclick="openEditModal(${r.id})">編輯</button>
+        <button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆紀錄？\n（同時從 Google Sheets 移除）')) return;
+  const r = records.find(r => r.id === id);
+  if (!r) return;
+  // 刪除後後面的行號都往前移，先更新其他紀錄的 rowIndex
+  records = records.filter(rec => rec.id !== id).map(rec => ({
+    ...rec,
+    rowIndex: rec.rowIndex > r.rowIndex ? rec.rowIndex - 1 : rec.rowIndex
+  }));
+  updateMonthSelects();
+  renderSheet();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+  try {
+    await fetch(API_URL + '?action=delete&row=' + r.rowIndex, { mode: 'no-cors' });
+  } catch(err) {
+    console.error('刪除同步失敗', err);
+  }
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function resetForm() {
+  currentCat = ''; currentSource = ''; selectedTags.clear();
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tags-section').classList.remove('visible');
+  document.getElementById('other-note-section').classList.remove('visible');
+  document.getElementById('other-note-input').value = '';
+  document.getElementById('tags-wrap').innerHTML = '';
+  document.getElementById('note').value = '';
+  document.getElementById('member-name').value = '';
+  document.getElementById('member-phone').value = '';
+  updateChar();
+}
+
+function dateStr() { return new Date().toLocaleDateString('zh-TW').replace(/\//g,''); }
+
+function autoColWidth(ws, data) {
+  if (!data.length) return;
+  const cols = Object.keys(data[0]);
+  ws['!cols'] = cols.map(key => ({ wch: Math.min(40, Math.max(10, ...data.map(r => String(r[key]||'').length), key.length) + 2) }));
+}
+
+function exportSheetXLSX() {
+  const filtered = filteredRecords('sheet-month-select');
+  if (!filtered.length) { alert('此月份尚無資料可匯出'); return; }
+  const data = filtered.map(r => ({ '時間': r.ts, '填寫人': r.filledBy, '來源': r.source, '姓名': r.name, '手機': r.phone, '類別': r.cat, '標籤': r.tags.join('／') || '—', '補充說明': r.note || '—' }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  autoColWidth(ws, data);
+  const wb = XLSX.utils.book_new();
+  const monthVal = document.getElementById('sheet-month-select').value;
+  XLSX.utils.book_append_sheet(wb, ws, monthVal === 'all' ? '全部紀錄' : monthVal+'月');
+  XLSX.writeFile(wb, `客服紀錄_${monthVal === 'all' ? '全部' : monthVal.replace('/','')}_${dateStr()}.xlsx`);
+}
+
+function renderStats() {
+  const noData = document.getElementById('no-data-msg');
+  const content = document.getElementById('stats-content');
+  const filtered = filteredRecords('stats-month-select');
+  if (!records.length) { noData.style.display='block'; content.style.display='none'; return; }
+  noData.style.display='none'; content.style.display='block';
+  if (!filtered.length) {
+    document.getElementById('stat-total').textContent = '0';
+    document.getElementById('stat-top-cat').textContent = '—';
+    document.getElementById('stat-top-tag').textContent = '—';
+    document.getElementById('stat-cat-count').textContent = '0';
+    document.getElementById('stats-period').textContent = '此月份尚無資料';
+    if (catChartInst) { catChartInst.destroy(); catChartInst = null; }
+    if (tagChartInst) { tagChartInst.destroy(); tagChartInst = null; }
+    return;
+  }
+  const catCount = {}, tagCount = {};
+  filtered.forEach(r => {
+    catCount[r.cat] = (catCount[r.cat]||0) + 1;
+    r.tags.forEach(t => { if(t && t!=='—') tagCount[t] = (tagCount[t]||0) + 1; });
+  });
+  document.getElementById('stat-total').textContent = filtered.length;
+  const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+  const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('stat-top-cat').textContent = topCat ? `${topCat[0]}（${topCat[1]}件）` : '—';
+  document.getElementById('stat-top-tag').textContent = topTag ? `${topTag[0]}（${topTag[1]}件）` : '—';
+  document.getElementById('stat-cat-count').textContent = Object.keys(catCount).length;
+  document.getElementById('stats-period').textContent = `共 ${filtered.length} 筆`;
+  const catLabels = Object.keys(catCount);
+  const catColors = catLabels.map(l => CAT_COLOR_MAP[l] || '#CCCCCC');
+  if (catChartInst) catChartInst.destroy();
+  catChartInst = new Chart(document.getElementById('catChart'), {
+    type: 'doughnut',
+    data: { labels: catLabels, datasets: [{ data: catLabels.map(l=>catCount[l]), backgroundColor: catColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%',
+      plugins: { legend: { position:'bottom', labels:{ font:{family:'Noto Sans TC',size:11}, padding:10, boxWidth:10 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}：${ctx.parsed} 件` } } } }
+  });
+  const tagEntries = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const TAG_COLORS = { '過敏': '#FFD2D2', '光彩': '#E2C2DE', '商品瑕疵': '#D6D6AD', '塗抹方式': '#FFC78E' };
+  const tagColors = tagEntries.map(e => TAG_COLORS[e[0]] || '#7373B9');
+  tagChartInst = new Chart(document.getElementById('tagChart'), {
+    type: 'bar',
+    data: { labels: tagEntries.map(e=>e[0]), datasets: [{ data: tagEntries.map(e=>e[1]), backgroundColor: tagColors, borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ticks:{font:{family:'Noto Sans TC',size:11},color:'#7A7570',stepSize:1},grid:{color:'rgba(0,0,0,0.05)'},beginAtZero:true},
+               y:{ticks:{font:{family:'Noto Sans TC',size:11},color:'#7A7570'},grid:{display:false}} } }
+  });
+}
+
+function exportStatsPNG() {
+  const filtered = filteredRecords('stats-month-select');
+  if (!filtered.length) { alert('此月份尚無資料'); return; }
+  setTimeout(() => {
+    [['catChart','類別分佈'],['tagChart','標籤統計']].forEach(([id,name]) => {
+      const canvas = document.getElementById(id);
+      const bg = document.createElement('canvas');
+      bg.width = canvas.width; bg.height = canvas.height;
+      const ctx = bg.getContext('2d');
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,bg.width,bg.height);
+      ctx.drawImage(canvas,0,0);
+      const a = document.createElement('a');
+      a.href = bg.toDataURL('image/png');
+      a.download = `客服統計_${name}_${dateStr()}.png`;
+      a.click();
+    });
+  }, 100);
+}
+
+function exportStatsXLSX() {
+  const filtered = filteredRecords('stats-month-select');
+  if (!filtered.length) { alert('此月份尚無資料'); return; }
+  const catCount = {}, tagCount = {};
+  filtered.forEach(r => {
+    catCount[r.cat] = (catCount[r.cat]||0) + 1;
+    r.tags.forEach(t => { if(t && t!=='—') tagCount[t] = (tagCount[t]||0) + 1; });
+  });
+  const catData = Object.entries(catCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '類別':k, '件數':v, '佔比': Math.round(v/filtered.length*100)+'%' }));
+  const tagData = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => ({ '標籤':k, '件數':v }));
+  const monthVal = document.getElementById('stats-month-select').value;
+  const summaryData = [
+    { '項目':'統計日期', '內容': new Date().toLocaleDateString('zh-TW') },
+    { '項目':'篩選月份', '內容': monthVal === 'all' ? '全部' : monthVal },
+    { '項目':'總筆數',   '內容': filtered.length },
+    { '項目':'最多類別', '內容': catData[0]?.['類別'] || '—' },
+    { '項目':'最熱標籤', '內容': tagData[0]?.['標籤'] || '—' },
+  ];
+  const wb = XLSX.utils.book_new();
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  wsSummary['!cols'] = [{wch:14},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, '摘要');
+  const wsCat = XLSX.utils.json_to_sheet(catData);
+  autoColWidth(wsCat, catData);
+  XLSX.utils.book_append_sheet(wb, wsCat, '類別統計');
+  const wsTag = XLSX.utils.json_to_sheet(tagData);
+  autoColWidth(wsTag, tagData);
+  XLSX.utils.book_append_sheet(wb, wsTag, '標籤統計');
+  XLSX.writeFile(wb, `客服統計_${monthVal==='all'?'全部':monthVal.replace('/','')}_${dateStr()}.xlsx`);
+}
+</script>
+
+<!-- 身份識別 Modal -->
+<div id="identity-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:var(--radius);padding:2rem;width:90%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px;">歡迎使用</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;">請輸入你的姓名，之後填寫的紀錄會自動帶入</div>
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">你的姓名</div>
+      <input id="identity-input" type="text" maxlength="10" placeholder="例如：王小明" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:15px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')confirmIdentity()">
+    </div>
+    <button onclick="confirmIdentity()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;cursor:pointer;">開始使用</button>
+  </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:var(--radius);padding:1.5rem;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="font-size:16px;font-weight:700;margin-bottom:1.25rem;">編輯紀錄</div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">來源</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="edit-source-wrap">
+        <button class="cat-btn" onclick="editSelectSource('FB/LINE',this)">FB／LINE</button>
+        <button class="cat-btn" onclick="editSelectSource('電話',this)">電話</button>
+        <button class="cat-btn" onclick="editSelectSource('網路平台',this)">網路平台（官網／蝦皮）</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">問題類別</div>
+      <div class="cat-grid">
+        <button class="cat-btn" onclick="editSelectCat('product',this)">商品問題</button>
+        <button class="cat-btn" onclick="editSelectCat('usage',this)">使用方式</button>
+        <button class="cat-btn" onclick="editSelectCat('emptybox',this)">空盒活動</button>
+        <button class="cat-btn" onclick="editSelectCat('order',this)">訂單問題</button>
+        <button class="cat-btn" onclick="editSelectCat('return',this)">退貨</button>
+        <button class="cat-btn" onclick="editSelectCat('other',this)">其他</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="field-label">關鍵字標籤</div>
+      <div class="tags-wrap" id="edit-tags-wrap"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">姓名</div>
+        <input id="edit-name" type="text" maxlength="20" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;">
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">手機號碼</div>
+        <input id="edit-phone" type="tel" maxlength="10" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;">
+      </div>
+    </div>
+    <div style="margin-bottom:1.25rem;">
+      <div class="field-label">補充說明</div>
+      <textarea id="edit-note" maxlength="150" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;resize:vertical;min-height:80px;outline:none;"></textarea>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <button class="btn-reset" onclick="closeEditModal()">取消</button>
+      <button class="btn-submit" id="edit-save-btn" onclick="saveEdit()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSource = '';
+let currentUser = '';
+
+function initIdentity() {
+  const saved = localStorage.getItem('aura_username');
+  if (saved) {
+    currentUser = saved;
+    document.getElementById('sidebar-username').textContent = saved;
+  } else {
+    showIdentityModal();
+  }
+}
+
+function showIdentityModal() {
+  const modal = document.getElementById('identity-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('identity-input').focus(), 100);
+}
+
+function confirmIdentity() {
+  const name = document.getElementById('identity-input').value.trim();
+  if (!name) { alert('請輸入姓名'); return; }
+  currentUser = name;
+  localStorage.setItem('aura_username', name);
+  document.getElementById('sidebar-username').textContent = name;
+  document.getElementById('identity-modal').style.display = 'none';
+  document.getElementById('identity-input').value = '';
+}
+
+function resetUser() {
+  if (!confirm('確定要切換使用者？')) return;
+  localStorage.removeItem('aura_username');
+  currentUser = '';
+  document.getElementById('sidebar-username').textContent = '未登入';
+  showIdentityModal();
+}
+
+window.addEventListener('DOMContentLoaded', initIdentity);
+
+// 櫻花＋白雪特效
+(function() {
+  function createPetal() {
+    const el = document.createElement('div');
+    el.className = 'sakura';
+    el.textContent = '🍉';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 12 + 10) + 'px';
+    el.style.animationDuration = (Math.random() * 5 + 7) + 's';
+    el.style.animationDelay = (Math.random() * 3) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 13000);
+  }
+
+  function createSnow() {
+    const el = document.createElement('div');
+    el.className = 'snow';
+    el.textContent = '🍉';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 6 + 6) + 'px';
+    el.style.opacity = '0.6';
+    el.style.animationDuration = (Math.random() * 6 + 8) + 's';
+    el.style.animationDelay = (Math.random() * 4) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 15000);
+  }
+
+  // 初始化一批
+  for (let i = 0; i < 6; i++) setTimeout(createPetal, i * 300);
+  for (let i = 0; i < 10; i++) setTimeout(createSnow, i * 200);
+
+  // 持續生成
+  setInterval(createPetal, 1200);
+  setInterval(createSnow, 800);
+})();
+let editingId = null;
+let editCat = '';
+let editSelectedTags = new Set();
+
+function selectSource(src, btn) {
+  currentSource = src;
+  document.querySelectorAll('.form-card .cat-btn').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes('selectSource')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+}
+
+function editSelectSource(src, btn) {
+  currentSource = src;
+  document.querySelectorAll('#edit-source-wrap .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function editSelectCat(cat, btn) {
+  editCat = cat; editSelectedTags.clear();
+  document.querySelectorAll('#edit-modal .cat-grid .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('edit-tags-wrap');
+  const tags = TAGS[cat] || [];
+  wrap.innerHTML = '';
+  tags.forEach(t => {
+    const el = document.createElement('button');
+    el.className = 'tag'; el.textContent = t;
+    el.onclick = () => {
+      if (editSelectedTags.has(t)) { editSelectedTags.delete(t); el.classList.remove('active'); }
+      else { editSelectedTags.add(t); el.classList.add('active'); }
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function openEditModal(id) {
+  const r = records.find(r => r.id === id);
+  if (!r) return;
+  editingId = id;
+  editCat = Object.keys(CAT_LABELS).find(k => CAT_LABELS[k] === r.cat) || '';
+  editSelectedTags = new Set(r.tags);
+  currentSource = r.source || '';
+
+  // 設定來源
+  document.querySelectorAll('#edit-source-wrap .cat-btn').forEach(b => {
+    const src = b.textContent.replace('／','/').trim();
+    b.classList.toggle('active', src === currentSource || b.textContent.includes(currentSource));
+  });
+
+  // 設定類別
+  const catBtns = document.querySelectorAll('#edit-modal .cat-grid .cat-btn');
+  catBtns.forEach(b => b.classList.remove('active'));
+  editSelectCat(editCat, [...catBtns].find(b => {
+    const map = {'商品問題':'product','使用方式':'usage','空盒活動':'emptybox','訂單問題':'order','其他':'other'};
+    return map[b.textContent] === editCat;
+  }) || catBtns[0]);
+
+  // 恢復已選標籤
+  setTimeout(() => {
+    document.querySelectorAll('#edit-tags-wrap .tag').forEach(el => {
+      if (editSelectedTags.has(el.textContent)) el.classList.add('active');
+    });
+  }, 50);
+
+  document.getElementById('edit-name').value = r.name === '—' ? '' : r.name;
+  document.getElementById('edit-phone').value = r.phone === '—' ? '' : r.phone;
+  document.getElementById('edit-note').value = r.note === '—' ? '' : r.note;
+
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEdit() {
+  if (!editCat) { alert('請選擇問題類別'); return; }
+  const r = records.find(r => r.id === editingId);
+  if (!r) return;
+  const btn = document.getElementById('edit-save-btn');
+  btn.disabled = true; btn.textContent = '儲存中…';
+
+  const updated = {
+    ...r,
+    source: currentSource,
+    cat: CAT_LABELS[editCat],
+    tags: [...editSelectedTags],
+    name: document.getElementById('edit-name').value.trim() || '—',
+    phone: document.getElementById('edit-phone').value.trim() || '—',
+    note: document.getElementById('edit-note').value.trim() || '—'
+  };
+
+  records = records.map(rec => rec.id === editingId ? updated : rec);
+  renderSheet();
+  closeEditModal();
+
+  const payload = {
+    action: 'update', row: r.rowIndex,
+    ts: r.ts, cat: updated.cat,
+    tags: updated.tags.join('／') || '—',
+    note: updated.note,
+    name: updated.name,
+    phone: updated.phone,
+    source: updated.source
+  };
+  console.log('送出編輯:', JSON.stringify(payload));
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch(err) { console.error('更新失敗', err); }
+
+  btn.disabled = false; btn.textContent = '儲存變更';
+}
+</script>
+</body>
+</html>
