@@ -8,7 +8,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #F5F3EE; --surface: #FFFFFF; --border: #E2DDD5; --border-strong: #C8C2B8;
+    --bg: #F5F3EE; --surface: #FFFFFF; --border: #DDDDFF; --border-strong: #C8C2B8;
     --text: #1A1814; --text-muted: #7A7570; --text-hint: #B0AAA3;
     --accent: #2D4A3E; --accent-light: #E8F0ED; --accent-mid: #4A7A68;
     --tag-bg: #F0EDE8; --tag-active-bg: #2D4A3E; --tag-active-text: #FFFFFF;
@@ -17,7 +17,26 @@
     --radius: 10px; --radius-sm: 6px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   }
-  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAABT0lEQVR4nO1YwQ2DMAw0VZdD8GIGhmAEhmAGXiDGS1+mBlLHjo0EFfcCBMdhX9xLAR48eHBvFJ5kU9sFPK6H3oX77UGCwqqm/F4DCAB2oS+TMgIqLnaeC7PAqe3CLzFVU27angNxi738peVJCvTyVy6PqMWcv+qhL+ZxiT43j8vm5Tk+ZQVq/LUXSc8tPnUZM1glbBm9ZoWLQISXKAq2xRp/ncUjWiScvzTI4Ym2ODarOH9xJsd7c326EaiZVVQUNy72grQ+PVQwNqv2reDGBsc3AQStwPXm1EupSEsQQB6pUNWY8UgoyCGtplvcOgurwNSs8sp3CGkUO1TQa+Z5IeqB/Zd5V48i9UsSXST0AWsituI+i+SquL9AbvxYIYls968gwDlVlAbey1dQFX1ieVELbZrJ2uRo8iCFZh+DcPkLQ5ojc3Z9LttEyZ7kb/EBrC3bMjcH+HIAAAAASUVORK5CYII=") 16 8, auto; }
+  .sakura, .snow {
+    position: fixed; top: -20px; pointer-events: none; z-index: 9999;
+    animation: sakuraFall linear infinite;
+  }
+  @keyframes sakuraFall {
+    0%   { transform: translateY(-20px) rotate(0deg) translateX(0px); opacity: 0.9; }
+    25%  { transform: translateY(25vh) rotate(90deg) translateX(30px); }
+    50%  { transform: translateY(50vh) rotate(180deg) translateX(-20px); }
+    75%  { transform: translateY(75vh) rotate(270deg) translateX(25px); }
+    100% { transform: translateY(110vh) rotate(360deg) translateX(-10px); opacity: 0; }
+  }
+  @keyframes snowFall {
+    0%   { transform: translateY(-10px) translateX(0px); opacity: 0.8; }
+    25%  { transform: translateY(25vh) translateX(8px); }
+    50%  { transform: translateY(50vh) translateX(-8px); }
+    75%  { transform: translateY(75vh) translateX(5px); }
+    100% { transform: translateY(110vh) translateX(-5px); opacity: 0.2; }
+  }
+  .snow { animation-name: snowFall; }
   .layout { display: flex; min-height: 100vh; }
   .sidebar { width: 200px; flex-shrink: 0; background: var(--accent); padding: 2rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
   .sidebar-logo { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.05em; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.15); }
@@ -148,12 +167,17 @@
           <button class="cat-btn" onclick="selectCat('usage',this)">使用方式</button>
           <button class="cat-btn" onclick="selectCat('emptybox',this)">空盒活動</button>
           <button class="cat-btn" onclick="selectCat('order',this)">訂單問題</button>
+          <button class="cat-btn" onclick="selectCat('return',this)">退貨</button>
           <button class="cat-btn" onclick="selectCat('other',this)">其他</button>
         </div>
       </div>
       <div class="form-card tags-section" id="tags-section">
         <div class="field-label">關鍵字標籤 <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-hint);">可複選</span></div>
         <div class="tags-wrap" id="tags-wrap"></div>
+      </div>
+      <div class="form-card tags-section" id="other-note-section">
+        <div class="field-label">其他問題說明 <span class="req">*</span></div>
+        <input id="other-note-input" type="text" maxlength="50" placeholder="請簡短描述問題類型" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;background:#fff;color:var(--text);" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
       </div>
       <div class="form-card">
         <div class="field-label">會員資料 <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-hint);">選填</span></div>
@@ -292,10 +316,20 @@ const TAGS = {
   usage:    ['光彩','海藻','淨化液','塗抹方式','用量','衣物變色','手變色'],
   emptybox: ['問地址','問收寄進度'],
   order:    ['修改','取消','內容錯誤','問進度'],
+  return:   [],
   other:    []
 };
-const CAT_LABELS = { product:'商品問題', usage:'使用方式', emptybox:'空盒活動', order:'訂單問題', other:'其他' };
-const PALETTE = ['#2D4A3E','#4A7A68','#7AADA0','#B8D5C8','#D4E8E0'];
+const CAT_LABELS = { product:'商品問題', usage:'使用方式', emptybox:'空盒活動', order:'訂單問題', return:'退貨', other:'其他' };
+// 顏色對應類別順序：商品問題、使用方式、空盒活動、訂單問題、退貨、其他
+const CAT_COLOR_MAP = {
+  '商品問題': '#FFCBB3',
+  '使用方式': '#FF9797',
+  '空盒活動': '#B3D9D9',
+  '訂單問題': '#9B59B6',
+  '退貨':     '#E74C3C',
+  '其他':     '#E07B39'
+};
+const PALETTE = ['#FFCBB3','#FF9797','#B3D9D9','#9B59B6','#E74C3C','#E07B39'];
 
 let currentCat = '', selectedTags = new Set(), records = [];
 let catChartInst = null, tagChartInst = null;
@@ -341,8 +375,18 @@ function selectCat(cat, btn) {
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const section = document.getElementById('tags-section');
+  const otherSection = document.getElementById('other-note-section');
   const wrap = document.getElementById('tags-wrap');
   const tags = TAGS[cat] || [];
+
+  // 顯示隱藏其他說明框
+  if (cat === 'other') {
+    otherSection.classList.add('visible');
+    document.getElementById('other-note-input').value = '';
+  } else {
+    otherSection.classList.remove('visible');
+  }
+
   if (!tags.length) { section.classList.remove('visible'); return; }
   wrap.innerHTML = '';
   tags.forEach(t => {
@@ -367,6 +411,12 @@ function updateChar() {
 async function submitForm() {
   if (!currentCat) { alert('請先選擇問題類別'); return; }
   if (!currentSource) { alert('請先選擇來源'); return; }
+  if (currentCat === 'other') {
+    const otherNote = document.getElementById('other-note-input').value.trim();
+    if (!otherNote) { alert('請填寫其他問題說明'); return; }
+    selectedTags.clear();
+    selectedTags.add(otherNote);
+  }
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '送出中…';
   const now = new Date();
@@ -497,6 +547,8 @@ function resetForm() {
   currentCat = ''; currentSource = ''; selectedTags.clear();
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tags-section').classList.remove('visible');
+  document.getElementById('other-note-section').classList.remove('visible');
+  document.getElementById('other-note-input').value = '';
   document.getElementById('tags-wrap').innerHTML = '';
   document.getElementById('note').value = '';
   document.getElementById('member-name').value = '';
@@ -553,19 +605,21 @@ function renderStats() {
   document.getElementById('stat-cat-count').textContent = Object.keys(catCount).length;
   document.getElementById('stats-period').textContent = `共 ${filtered.length} 筆`;
   const catLabels = Object.keys(catCount);
+  const catColors = catLabels.map(l => CAT_COLOR_MAP[l] || '#CCCCCC');
   if (catChartInst) catChartInst.destroy();
   catChartInst = new Chart(document.getElementById('catChart'), {
     type: 'doughnut',
-    data: { labels: catLabels, datasets: [{ data: catLabels.map(l=>catCount[l]), backgroundColor: PALETTE.slice(0,catLabels.length), borderWidth: 2, borderColor: '#fff' }] },
+    data: { labels: catLabels, datasets: [{ data: catLabels.map(l=>catCount[l]), backgroundColor: catColors, borderWidth: 2, borderColor: '#fff' }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '55%',
       plugins: { legend: { position:'bottom', labels:{ font:{family:'Noto Sans TC',size:11}, padding:10, boxWidth:10 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}：${ctx.parsed} 件` } } } }
   });
   const tagEntries = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  if (tagChartInst) tagChartInst.destroy();
+  const TAG_COLORS = { '過敏': '#FFD2D2' };
+  const tagColors = tagEntries.map(e => TAG_COLORS[e[0]] || '#7373B9');
   tagChartInst = new Chart(document.getElementById('tagChart'), {
     type: 'bar',
-    data: { labels: tagEntries.map(e=>e[0]), datasets: [{ data: tagEntries.map(e=>e[1]), backgroundColor: '#2D4A3E', borderRadius: 4, borderSkipped: false }] },
+    data: { labels: tagEntries.map(e=>e[0]), datasets: [{ data: tagEntries.map(e=>e[1]), backgroundColor: tagColors, borderRadius: 4, borderSkipped: false }] },
     options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:false} },
       scales:{ x:{ticks:{font:{family:'Noto Sans TC',size:11},color:'#7A7570',stepSize:1},grid:{color:'rgba(0,0,0,0.05)'},beginAtZero:true},
@@ -656,6 +710,7 @@ function exportStatsXLSX() {
         <button class="cat-btn" onclick="editSelectCat('usage',this)">使用方式</button>
         <button class="cat-btn" onclick="editSelectCat('emptybox',this)">空盒活動</button>
         <button class="cat-btn" onclick="editSelectCat('order',this)">訂單問題</button>
+        <button class="cat-btn" onclick="editSelectCat('return',this)">退貨</button>
         <button class="cat-btn" onclick="editSelectCat('other',this)">其他</button>
       </div>
     </div>
@@ -723,6 +778,44 @@ function resetUser() {
 }
 
 window.addEventListener('DOMContentLoaded', initIdentity);
+
+// 櫻花＋白雪特效
+(function() {
+  function createPetal() {
+    const el = document.createElement('div');
+    el.className = 'sakura';
+    el.textContent = '🌸';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 12 + 10) + 'px';
+    el.style.animationDuration = (Math.random() * 5 + 7) + 's';
+    el.style.animationDelay = (Math.random() * 3) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 13000);
+  }
+
+  function createSnow() {
+    const el = document.createElement('div');
+    el.className = 'snow';
+    el.textContent = '❄';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 8 + 6) + 'px';
+    el.style.color = '#A8C8E8';
+    el.style.opacity = '0.9';
+    el.style.textShadow = '0 0 4px rgba(100,160,220,0.6)';
+    el.style.animationDuration = (Math.random() * 6 + 8) + 's';
+    el.style.animationDelay = (Math.random() * 4) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 15000);
+  }
+
+  // 初始化一批
+  for (let i = 0; i < 6; i++) setTimeout(createPetal, i * 300);
+  for (let i = 0; i < 10; i++) setTimeout(createSnow, i * 200);
+
+  // 持續生成
+  setInterval(createPetal, 1200);
+  setInterval(createSnow, 800);
+})();
 let editingId = null;
 let editCat = '';
 let editSelectedTags = new Set();
