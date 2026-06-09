@@ -17,26 +17,7 @@
     --radius: 10px; --radius-sm: 6px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   }
-  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAABT0lEQVR4nO1YwQ2DMAw0VZdD8GIGhmAEhmAGXiDGS1+mBlLHjo0EFfcCBMdhX9xLAR48eHBvFJ5kU9sFPK6H3oX77UGCwqqm/F4DCAB2oS+TMgIqLnaeC7PAqe3CLzFVU27angNxi738peVJCvTyVy6PqMWcv+qhL+ZxiT43j8vm5Tk+ZQVq/LUXSc8tPnUZM1glbBm9ZoWLQISXKAq2xRp/ncUjWiScvzTI4Ym2ODarOH9xJsd7c326EaiZVVQUNy72grQ+PVQwNqv2reDGBsc3AQStwPXm1EupSEsQQB6pUNWY8UgoyCGtplvcOgurwNSs8sp3CGkUO1TQa+Z5IeqB/Zd5V48i9UsSXST0AWsituI+i+SquL9AbvxYIYls968gwDlVlAbey1dQFX1ieVELbZrJ2uRo8iCFZh+DcPkLQ5ojc3Z9LttEyZ7kb/EBrC3bMjcH+HIAAAAASUVORK5CYII=") 16 8, auto; }
-  .sakura, .snow {
-    position: fixed; top: -20px; pointer-events: none; z-index: 9999;
-    animation: sakuraFall linear infinite;
-  }
-  @keyframes sakuraFall {
-    0%   { transform: translateY(-20px) rotate(0deg) translateX(0px); opacity: 0.9; }
-    25%  { transform: translateY(25vh) rotate(90deg) translateX(30px); }
-    50%  { transform: translateY(50vh) rotate(180deg) translateX(-20px); }
-    75%  { transform: translateY(75vh) rotate(270deg) translateX(25px); }
-    100% { transform: translateY(110vh) rotate(360deg) translateX(-10px); opacity: 0; }
-  }
-  @keyframes snowFall {
-    0%   { transform: translateY(-10px) translateX(0px); opacity: 0.8; }
-    25%  { transform: translateY(25vh) translateX(8px); }
-    50%  { transform: translateY(50vh) translateX(-8px); }
-    75%  { transform: translateY(75vh) translateX(5px); }
-    100% { transform: translateY(110vh) translateX(-5px); opacity: 0.2; }
-  }
-  .snow { animation-name: snowFall; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
   .layout { display: flex; min-height: 100vh; }
   .sidebar { width: 200px; flex-shrink: 0; background: #F3F3FA; padding: 2rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
   .sidebar-logo { color: #3D3580; font-size: 15px; font-weight: 700; letter-spacing: 0.05em; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(100,80,180,0.2); }
@@ -235,7 +216,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>時間</th><th>填寫人</th><th>來源</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
+          <thead><tr><th>時間</th><th>追蹤</th><th>填寫人</th><th>來源</th><th>姓名</th><th>手機</th><th>類別</th><th>標籤</th><th>補充說明</th><th></th></tr></thead>
           <tbody id="sheet-body">
             <tr><td colspan="4" class="empty-state">點擊「重新載入」讀取資料</td></tr>
           </tbody>
@@ -371,8 +352,8 @@ function switchPage(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
-  if (id === 'sheet') loadFromSheets();
-  if (id === 'stats') { loadFromSheets(); }
+  if ((id === 'sheet' || id === 'stats') && records.length === 0) loadFromSheets();
+  if (id === 'stats' && records.length > 0) renderStats();
 }
 
 function selectCat(cat, btn) {
@@ -413,6 +394,19 @@ function updateChar() {
   el.className = 'char-count' + (n > 130 ? ' warn' : '');
 }
 
+function selectMember(idx) {
+  const m = (window._lookupMembers || [])[idx];
+  if (!m) return;
+  document.getElementById('member-name').value = m.name || '';
+  document.getElementById('member-phone').dataset.card = m.card;
+  document.getElementById('member-phone').dataset.memberId = m.id;
+  const result = document.getElementById('member-result');
+  result.style.background = '#E8F0ED';
+  result.style.border = '1px solid #B8D5C8';
+  result.style.color = '#2D4A3E';
+  result.innerHTML = `✓ 已選擇　<strong>${m.name}</strong>　${m.card}　<span style="color:var(--text-muted);font-size:12px;">${m.id}</span>`;
+}
+
 async function lookupMember() {
   const phoneRaw = document.getElementById('member-phone').value.trim();
   const nameInput = document.getElementById('member-name').value.trim();
@@ -431,14 +425,28 @@ async function lookupMember() {
     const res = await fetch(API_URL + '?' + params.toString());
     const json = await res.json();
     if (json.result === 'found') {
-      document.getElementById('member-name').value = json.name || '';
-      result.style.display = 'block';
-      result.style.background = '#E8F0ED';
-      result.style.border = '1px solid #B8D5C8';
-      result.style.color = '#2D4A3E';
-      result.innerHTML = `✓ 找到會員　<strong>${json.name}</strong>　${json.card}　<span style="color:var(--text-muted);font-size:12px;">${json.id}</span>${json.source ? `　<span style="color:var(--text-muted);font-size:12px;">${json.source}</span>` : ''}`;
-      document.getElementById('member-phone').dataset.card = json.card;
-      document.getElementById('member-phone').dataset.memberId = json.id;
+      const members = json.members || [json];
+      if (members.length === 1) {
+        document.getElementById('member-name').value = members[0].name || '';
+        document.getElementById('member-phone').dataset.card = members[0].card;
+        document.getElementById('member-phone').dataset.memberId = members[0].id;
+        result.style.display = 'block';
+        result.style.background = '#E8F0ED';
+        result.style.border = '1px solid #B8D5C8';
+        result.style.color = '#2D4A3E';
+        result.innerHTML = `✓ 找到會員　<strong>${members[0].name}</strong>　${members[0].card}　<span style="color:var(--text-muted);font-size:12px;">${members[0].id}</span>`;
+      } else {
+        result.style.display = 'block';
+        result.style.background = '#F3F3FA';
+        result.style.border = '1px solid #DDDDFF';
+        result.style.color = 'var(--text)';
+        result.innerHTML = `找到 ${members.length} 筆，請點選：<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">` +
+          members.map((m, i) => `<button onclick="selectMember(${i})" data-idx="${i}" style="text-align:left;padding:8px 12px;border:1px solid #DDDDFF;border-radius:6px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;" onmouseover="this.style.background='#EDE4FF'" onmouseout="this.style.background='#fff'">
+            <strong>${m.name}</strong>　${m.card}　<span style="color:var(--text-muted);font-size:12px;">${m.id}</span>
+          </button>`).join('') + '</div>';
+        // 把所有會員資料存起來
+        window._lookupMembers = members;
+      }
     } else {
       result.style.display = 'block';
       result.style.background = '#FFF3F0';
@@ -531,7 +539,8 @@ async function loadFromSheets(retryCount = 0) {
       name: r[nameIdx] || '—',
       phone: r[phoneIdx] || '—',
       source: r[sourceIdx] || '—',
-      filledBy: r[filledByIdx] || '—'
+      filledBy: r[filledByIdx] || '—',
+      followUp: false
     }));
     updateMonthSelects();
     renderSheet();
@@ -559,8 +568,14 @@ function renderSheet() {
     return;
   }
   tbody.innerHTML = filtered.map(r => `
-    <tr>
+    <tr style="${r.followUp ? 'background:#FFF8E7;' : ''}">
       <td style="white-space:nowrap;color:var(--text-muted);font-size:12px;">${r.ts}</td>
+      <td style="text-align:center;">
+        <input type="checkbox" ${r.followUp ? 'checked' : ''} 
+          title="需要追蹤"
+          style="width:16px;height:16px;cursor:pointer;accent-color:#E07B39;"
+          onchange="toggleFollowUp(${r.id}, this.checked)">
+      </td>
       <td style="white-space:nowrap;font-size:13px;color:${r.filledBy!=='—'?'var(--text)':'var(--text-hint)'};">${r.filledBy}</td>
       <td style="white-space:nowrap;color:${r.source!=='—'?'var(--text)':'var(--text-hint)'};">${r.source}</td>
       <td style="white-space:nowrap;color:${r.name!=='—'?'var(--text)':'var(--text-hint)'};">${r.name}</td>
@@ -573,6 +588,17 @@ function renderSheet() {
         <button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button>
       </td>
     </tr>`).join('');
+}
+
+async function toggleFollowUp(id, checked) {
+  const r = records.find(r => r.id === id);
+  if (!r) return;
+  r.followUp = checked;
+  // 更新那一行的背景色
+  const rows = document.querySelectorAll('#sheet-body tr');
+  const filtered = filteredRecords('sheet-month-select');
+  const idx = filtered.findIndex(fr => fr.id === id);
+  if (rows[idx]) rows[idx].style.background = checked ? '#FFF8E7' : '';
 }
 
 async function deleteRecord(id) {
@@ -841,41 +867,7 @@ function resetUser() {
 
 window.addEventListener('DOMContentLoaded', initIdentity);
 
-// 櫻花＋白雪特效
-(function() {
-  function createPetal() {
-    const el = document.createElement('div');
-    el.className = 'sakura';
-    el.textContent = '🍉';
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.fontSize = (Math.random() * 12 + 10) + 'px';
-    el.style.animationDuration = (Math.random() * 5 + 7) + 's';
-    el.style.animationDelay = (Math.random() * 3) + 's';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 13000);
-  }
 
-  function createSnow() {
-    const el = document.createElement('div');
-    el.className = 'snow';
-    el.textContent = '🍉';
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.fontSize = (Math.random() * 6 + 6) + 'px';
-    el.style.opacity = '0.6';
-    el.style.animationDuration = (Math.random() * 6 + 8) + 's';
-    el.style.animationDelay = (Math.random() * 4) + 's';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 15000);
-  }
-
-  // 初始化一批
-  for (let i = 0; i < 6; i++) setTimeout(createPetal, i * 300);
-  for (let i = 0; i < 10; i++) setTimeout(createSnow, i * 200);
-
-  // 持續生成
-  setInterval(createPetal, 1200);
-  setInterval(createSnow, 800);
-})();
 let editingId = null;
 let editCat = '';
 let editSelectedTags = new Set();
