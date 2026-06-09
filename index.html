@@ -546,10 +546,13 @@ async function loadFromSheets() {
     }));
     updateMonthSelects();
     renderSheet();
+    if (catChartInst) { catChartInst.destroy(); catChartInst = null; }
+    if (tagChartInst) { tagChartInst.destroy(); tagChartInst = null; }
     renderStats();
     dot.className = 'sync-dot ok';
     text.textContent = '已同步 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
   } catch(err) {
+    console.error('loadFromSheets error:', err, err.message);
     dot.className = 'sync-dot err';
     text.textContent = '載入失敗';
     document.getElementById('sheet-body').innerHTML = '<tr><td colspan="9" class="empty-state">載入失敗，請點「重新載入」再試</td></tr>';
@@ -693,7 +696,7 @@ function renderStats() {
   document.getElementById('stats-period').textContent = `共 ${filtered.length} 筆`;
   const catLabels = Object.keys(catCount);
   const catColors = catLabels.map(l => CAT_COLOR_MAP[l] || '#CCCCCC');
-  if (catChartInst) catChartInst.destroy();
+  if (catChartInst) { catChartInst.destroy(); catChartInst = null; }
   catChartInst = new Chart(document.getElementById('catChart'), {
     type: 'doughnut',
     data: { labels: catLabels, datasets: [{ data: catLabels.map(l=>catCount[l]), backgroundColor: catColors, borderWidth: 2, borderColor: '#fff' }] },
@@ -704,6 +707,7 @@ function renderStats() {
   const tagEntries = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const TAG_COLORS = { '過敏': '#FFD2D2', '光彩': '#E2C2DE', '商品瑕疵': '#D6D6AD', '塗抹方式': '#FFC78E' };
   const tagColors = tagEntries.map(e => TAG_COLORS[e[0]] || '#7373B9');
+  if (tagChartInst) { tagChartInst.destroy(); tagChartInst = null; }
   tagChartInst = new Chart(document.getElementById('tagChart'), {
     type: 'bar',
     data: { labels: tagEntries.map(e=>e[0]), datasets: [{ data: tagEntries.map(e=>e[1]), backgroundColor: tagColors, borderRadius: 4, borderSkipped: false }] },
