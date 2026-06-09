@@ -531,6 +531,7 @@ async function loadFromSheets() {
     const phoneIdx = header.indexOf('手機');
     const sourceIdx = header.indexOf('來源');
     const filledByIdx = header.indexOf('填寫人');
+    const followUpIdx = header.indexOf('追蹤');
     records = rows.slice(1).filter(r => r[tsIdx]).map((r, i) => ({
       id: i,
       rowIndex: i + 2,
@@ -542,7 +543,7 @@ async function loadFromSheets() {
       phone: r[phoneIdx] || '—',
       source: r[sourceIdx] || '—',
       filledBy: r[filledByIdx] || '—',
-      followUp: false
+      followUp: r[followUpIdx] === '✓'
     }));
     updateMonthSelects();
     renderSheet();
@@ -592,15 +593,23 @@ function renderSheet() {
     </tr>`).join('');
 }
 
-async function toggleFollowUp(id, checked) {
+async async function toggleFollowUp(id, checked) {
   const r = records.find(r => r.id === id);
   if (!r) return;
   r.followUp = checked;
-  // 更新那一行的背景色
   const rows = document.querySelectorAll('#sheet-body tr');
   const filtered = filteredRecords('sheet-month-select');
   const idx = filtered.findIndex(fr => fr.id === id);
   if (rows[idx]) rows[idx].style.background = checked ? '#FFF8E7' : '';
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'followup', row: r.rowIndex, followUp: checked })
+    });
+  } catch(err) {
+    console.error('追蹤同步失敗', err);
+  }
 }
 
 async function deleteRecord(id) {
