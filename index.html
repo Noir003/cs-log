@@ -409,8 +409,7 @@ function selectMember(idx) {
 
 async function lookupMember() {
   const phoneRaw = document.getElementById('member-phone').value.trim();
-  const nameInput = document.getElementById('member-name').value.trim();
-  if (!phoneRaw && !nameInput) { alert('請輸入手機號碼或姓名'); return; }
+  if (!phoneRaw) { alert('請輸入手機號碼'); return; }
   const btn = document.getElementById('lookup-btn');
   const result = document.getElementById('member-result');
   btn.textContent = '查詢中…'; btn.disabled = true;
@@ -419,9 +418,7 @@ async function lookupMember() {
   const phone = phoneRaw.replace(/^0+/, '');
 
   try {
-    const params = new URLSearchParams({ action: 'member', t: Date.now() });
-    if (phone) params.set('phone', phone);
-    if (nameInput) params.set('name', nameInput);
+    const params = new URLSearchParams({ action: 'member', phone: phone, t: Date.now() });
     const res = await fetch(API_URL + '?' + params.toString());
     const json = await res.json();
     if (json.result === 'found') {
@@ -516,9 +513,9 @@ async function loadFromSheets(retryCount = 0) {
   const text = document.getElementById('sync-text');
   text.textContent = retryCount > 0 ? '重試中…' : '載入中…'; dot.className = 'sync-dot';
   try {
-    const res = await fetch(API_URL + '?t=' + Date.now());
+    const res = await fetch(API_URL + '?action=getall&t=' + Date.now());
     const json = await res.json();
-    if (!json.data) throw new Error('no data');
+    if (!json.data || !Array.isArray(json.data)) throw new Error('no data');
     const rows = json.data || [];
     const header = rows[0] || [];
     const tsIdx = header.indexOf('時間');
