@@ -593,7 +593,7 @@ function renderSheet() {
     </tr>`).join('');
 }
 
-async async function toggleFollowUp(id, checked) {
+async function toggleFollowUp(id, checked) {
   const r = records.find(r => r.id === id);
   if (!r) return;
   r.followUp = checked;
