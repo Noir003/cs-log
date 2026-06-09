@@ -506,12 +506,19 @@ async function submitForm() {
   btn.disabled = false; btn.textContent = '送出紀錄';
 }
 
-async function loadFromSheets(retryCount = 0) {
+let isLoading = false;
+
+async function loadFromSheets() {
+  if (isLoading) return;
+  isLoading = true;
   const dot = document.getElementById('sync-dot');
   const text = document.getElementById('sync-text');
-  text.textContent = retryCount > 0 ? '重試中…' : '載入中…'; dot.className = 'sync-dot';
+  text.textContent = '載入中…'; dot.className = 'sync-dot';
   try {
-    const res = await fetch(API_URL + '?action=getall&t=' + Date.now());
+    const res = await fetch(API_URL + '?action=getall&t=' + Date.now(), {
+      redirect: 'follow',
+      method: 'GET'
+    });
     const json = await res.json();
     if (!json.data || !Array.isArray(json.data)) throw new Error('no data');
     const rows = json.data || [];
@@ -542,15 +549,12 @@ async function loadFromSheets(retryCount = 0) {
     renderStats();
     dot.className = 'sync-dot ok';
     text.textContent = '已同步 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
-    return; // 成功就結束，不再重試
   } catch(err) {
-    if (retryCount < 2) {
-      setTimeout(() => loadFromSheets(retryCount + 1), 2000);
-    } else {
-      dot.className = 'sync-dot err';
-      text.textContent = '載入失敗';
-      document.getElementById('sheet-body').innerHTML = '<tr><td colspan="9" class="empty-state">載入失敗，請點「重新載入」再試</td></tr>';
-    }
+    dot.className = 'sync-dot err';
+    text.textContent = '載入失敗';
+    document.getElementById('sheet-body').innerHTML = '<tr><td colspan="9" class="empty-state">載入失敗，請點「重新載入」再試</td></tr>';
+  } finally {
+    isLoading = false;
   }
 }
 
