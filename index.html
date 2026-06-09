@@ -438,9 +438,7 @@ async function lookupMember() {
         result.style.border = '1px solid #DDDDFF';
         result.style.color = 'var(--text)';
         result.innerHTML = `找到 ${members.length} 筆，請點選：<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">` +
-          members.map((m, i) => `<button onclick="selectMember(${i})" data-idx="${i}" style="text-align:left;padding:8px 12px;border:1px solid #DDDDFF;border-radius:6px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;" onmouseover="this.style.background='#EDE4FF'" onmouseout="this.style.background='#fff'">
-            <strong>${m.name}</strong>　${m.card}　<span style="color:var(--text-muted);font-size:12px;">${m.id}</span>
-          </button>`).join('') + '</div>';
+          members.map((m, i) => `<button onclick="selectMember(${i})" style="text-align:left;padding:8px 12px;border:1px solid #DDDDFF;border-radius:6px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;" onmouseover="this.style.background='#EDE4FF'" onmouseout="this.style.background='#fff'"><strong>${m.name}</strong>　${m.card}　<span style="color:var(--color-text-muted);font-size:12px;">${m.id}</span></button>`).join('') + '</div>';
         // 把所有會員資料存起來
         window._lookupMembers = members;
       }
