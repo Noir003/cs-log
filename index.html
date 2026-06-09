@@ -56,9 +56,9 @@
   .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
   .field-label .req { color: var(--danger); font-size: 14px; line-height: 1; }
   .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-  .cat-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--tag-bg); color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500; }
-  .cat-btn:hover { border-color: var(--accent-mid); color: var(--accent); }
-  .cat-btn.active { background: #EDE4FF; border-color: #C5B0F0; color: #3D3580; }
+  .cat-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--tag-bg); color: var(--text-muted); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500; }
+  .cat-btn:hover { border-color: #C5B0F0; color: #3D3580; background: #F3EEFF; }
+  .cat-btn.active { background: #EDE4FF; border: 2px solid #9B85E0; color: #3D3580; box-shadow: 0 0 0 3px rgba(155,133,224,0.2); transform: scale(0.97); }
   .tags-section { overflow: hidden; max-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
   .tags-section.visible { max-height: 300px; opacity: 1; }
   .tags-wrap { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 2px; }
@@ -189,9 +189,13 @@
           </div>
           <div>
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">手機號碼</div>
-            <input id="member-phone" type="tel" placeholder="09xxxxxxxx" maxlength="10" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'">
+            <div style="display:flex;gap:6px;">
+              <input id="member-phone" type="tel" placeholder="09xxxxxxxx" maxlength="10" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent-mid)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')lookupMember()">
+              <button onclick="lookupMember()" id="lookup-btn" style="padding:10px 12px;background:#FAF4FF;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:background 0.15s;" onmouseover="this.style.background='#EDE4FF'" onmouseout="this.style.background='#FAF4FF'">查詢</button>
+            </div>
           </div>
         </div>
+        <div id="member-result" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;"></div>
       </div>
       <div class="form-card">
         <div class="field-label">補充說明</div>
@@ -409,6 +413,51 @@ function updateChar() {
   el.className = 'char-count' + (n > 130 ? ' warn' : '');
 }
 
+async function lookupMember() {
+  const phoneRaw = document.getElementById('member-phone').value.trim();
+  const nameInput = document.getElementById('member-name').value.trim();
+  if (!phoneRaw && !nameInput) { alert('請輸入手機號碼或姓名'); return; }
+  const btn = document.getElementById('lookup-btn');
+  const result = document.getElementById('member-result');
+  btn.textContent = '查詢中…'; btn.disabled = true;
+
+  // 手機去掉開頭的 0
+  const phone = phoneRaw.replace(/^0+/, '');
+
+  try {
+    const params = new URLSearchParams({ action: 'member', t: Date.now() });
+    if (phone) params.set('phone', phone);
+    if (nameInput) params.set('name', nameInput);
+    const res = await fetch(API_URL + '?' + params.toString());
+    const json = await res.json();
+    if (json.result === 'found') {
+      document.getElementById('member-name').value = json.name || '';
+      result.style.display = 'block';
+      result.style.background = '#E8F0ED';
+      result.style.border = '1px solid #B8D5C8';
+      result.style.color = '#2D4A3E';
+      result.innerHTML = `✓ 找到會員　<strong>${json.name}</strong>　${json.card}　<span style="color:var(--text-muted);font-size:12px;">${json.id}</span>${json.source ? `　<span style="color:var(--text-muted);font-size:12px;">${json.source}</span>` : ''}`;
+      document.getElementById('member-phone').dataset.card = json.card;
+      document.getElementById('member-phone').dataset.memberId = json.id;
+    } else {
+      result.style.display = 'block';
+      result.style.background = '#FFF3F0';
+      result.style.border = '1px solid #F0C0B0';
+      result.style.color = '#8B3A2A';
+      result.innerHTML = '查無此會員，請手動填寫姓名';
+      document.getElementById('member-phone').dataset.card = '';
+      document.getElementById('member-phone').dataset.memberId = '';
+    }
+  } catch(err) {
+    result.style.display = 'block';
+    result.style.background = '#FFF3F0';
+    result.style.border = '1px solid #F0C0B0';
+    result.style.color = '#8B3A2A';
+    result.innerHTML = '查詢失敗，請稍後再試';
+  }
+  btn.textContent = '查詢'; btn.disabled = false;
+}
+
 async function submitForm() {
   if (!currentCat) { alert('請先選擇問題類別'); return; }
   if (!currentSource) { alert('請先選擇來源'); return; }
@@ -435,6 +484,8 @@ async function submitForm() {
     note: document.getElementById('note').value.trim() || '—',
     name: document.getElementById('member-name').value.trim() || '—',
     phone: document.getElementById('member-phone').value.trim() || '—',
+    card: document.getElementById('member-phone').dataset.card || '—',
+    memberId: document.getElementById('member-phone').dataset.memberId || '—',
     source: currentSource,
     filledBy: currentUser || '未知'
   };
@@ -560,6 +611,10 @@ function resetForm() {
   document.getElementById('note').value = '';
   document.getElementById('member-name').value = '';
   document.getElementById('member-phone').value = '';
+  document.getElementById('member-phone').dataset.card = '';
+  document.getElementById('member-phone').dataset.memberId = '';
+  const result = document.getElementById('member-result');
+  result.style.display = 'none'; result.innerHTML = '';
   updateChar();
 }
 
