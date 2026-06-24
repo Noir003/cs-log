@@ -568,7 +568,7 @@ async function loadFromSheets() {
       source: r[sourceIdx] || '—',
       filledBy: r[filledByIdx] || '—',
       followUp: r[followUpIdx] === '✓'
-    }));
+    })).reverse();
     updateMonthSelects();
     currentPage = 1;
     renderSheet();
